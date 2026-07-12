@@ -342,7 +342,7 @@ function Loader({onDone}){
 /* ===== 金ボタン ===== */
 function GoldButton({children,onClick,solid}){
   return html`<${motion.button} onClick=${onClick}
-    className=${"relative font-logo tracking-[.24em] rounded-[2px] overflow-hidden px-11 py-4 "+(solid?"text-ivory":"text-goldlight border border-gold")}
+    className=${"relative font-logo tracking-[.2em] sm:tracking-[.24em] text-sm sm:text-base rounded-[2px] overflow-hidden px-8 sm:px-11 py-3 sm:py-4 "+(solid?"text-ivory":"text-goldlight border border-gold")}
     style=${solid?{background:"linear-gradient(135deg,#B08D57,#8f6f3f)"}:{}}
     whileHover=${solid?{boxShadow:"0 0 30px rgba(176,141,87,.7)",y:-2}:{color:"#101A2B",boxShadow:"0 0 28px rgba(176,141,87,.65), inset 0 0 40px rgba(216,185,130,.35)"}}
     whileTap=${{boxShadow:"0 0 50px rgba(216,185,130,1), inset 0 0 60px rgba(216,185,130,.6)"}}
@@ -350,8 +350,9 @@ function GoldButton({children,onClick,solid}){
 }
 
 /* ===== 表紙：夜空から教会が現れる → Entrer ===== */
-function Cover({onEnter}){
+function Cover({onEnter,isMobile}){
   const stars=[[12,14],[27,9],[45,20],[62,11],[77,23],[87,7],[20,29],[70,31],[37,6],[55,16]];
+  const doorX=isMobile?"50%":"52%", doorY=isMobile?"74%":"72%";
   const scref=useRef(null);
   const { scrollYProgress } = useScroll({ container: scref });
   const titleOp = useTransform(scrollYProgress, [0, 0.28], [1, 0]);
@@ -379,25 +380,38 @@ function Cover({onEnter}){
       <${motion.p} className="absolute bottom-10 left-0 right-0 text-center font-title italic text-ivory/85 text-[15px] tracking-[.2em]"
         style=${{opacity:hintOp}} animate=${{y:[0,10,0]}} transition=${{duration:2.6,repeat:Infinity,ease:"easeInOut"}}>scroll<//>
     </section>
-    <!-- ② 教会（TOP2）：スクロールで“現れる”ようにフェードイン -->
-    <section className="relative h-screen w-full snap-start overflow-hidden">
-      <${motion.img} src="assets/TOP2.jpeg" alt="Pâtisserie Arômélancolie — 夜の教会のパティスリー"
-        className="absolute inset-0 w-full h-full object-cover"
-        initial=${{opacity:0,scale:1.08}} whileInView=${{opacity:1,scale:1}}
-        viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:2,ease:"easeOut"}} />
-      <!-- 店名（オーニング）に灯りと金のきらめきを重ねて“動かす” -->
-      <${motion.div} className="absolute overflow-hidden pointer-events-none" style=${{left:"46%",top:"36.5%",width:"31%",height:"15%"}}
-        initial=${{opacity:0}} whileInView=${{opacity:1}} viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:2,delay:.9,ease:"easeOut"}}>
-        <${motion.div} className="absolute inset-0" style=${{background:"radial-gradient(ellipse at 50% 55%,rgba(255,224,150,.22),transparent 70%)"}}
-          animate=${{opacity:[.4,.85,.4]}} transition=${{duration:5,repeat:Infinity,ease:"easeInOut"}} />
-        <${motion.div} className="absolute inset-0" style=${{background:"linear-gradient(105deg,transparent 44%,rgba(255,242,208,.5) 50%,transparent 56%)",mixBlendMode:"screen"}}
-          animate=${{x:["-130%","130%"]}} transition=${{duration:3,repeat:Infinity,repeatDelay:3,ease:"easeInOut"}} />
-      <//>
-      <${motion.div} className="absolute z-10" style=${{left:"52%",top:"72%",transform:"translate(-50%,-50%)"}}
-        initial=${{opacity:0,y:12}} whileInView=${{opacity:1,y:0}}
-        viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:1.3,delay:1.3,ease:"easeOut"}}>
-        <${GoldButton} onClick=${onEnter}>Entrer<//>
-      <//>
+    <!-- ② 教会（TOP2）：スクロールで“現れる”ようにフェードイン（スマホは画像全体を表示） -->
+    <section className="relative h-screen w-full snap-start overflow-hidden flex items-center justify-center">
+      <div className=${isMobile?"relative w-full aspect-[3/2]":"absolute inset-0"}>
+        <${motion.img} src="assets/TOP2.jpeg" alt="Pâtisserie Arômélancolie — 夜の教会のパティスリー"
+          className="absolute inset-0 w-full h-full object-cover"
+          initial=${{opacity:0,scale:1.08}} whileInView=${{opacity:1,scale:1}}
+          viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:2,ease:"easeOut"}} />
+        ${isMobile?html`<${F}>
+          <div className="absolute inset-x-0 top-0 h-14 pointer-events-none" style=${{background:"linear-gradient(180deg,#0b0912,transparent)"}}></div>
+          <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none" style=${{background:"linear-gradient(0deg,#0b0912,transparent)"}}></div>
+        <//>`:null}
+        <!-- 店名（オーニング）に灯りと金のきらめきを重ねて“動かす” -->
+        <${motion.div} className="absolute overflow-hidden pointer-events-none" style=${{left:"46%",top:"36.5%",width:"31%",height:"15%"}}
+          initial=${{opacity:0}} whileInView=${{opacity:1}} viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:2,delay:.9,ease:"easeOut"}}>
+          <${motion.div} className="absolute inset-0" style=${{background:"radial-gradient(ellipse at 50% 55%,rgba(255,224,150,.22),transparent 70%)"}}
+            animate=${{opacity:[.4,.85,.4]}} transition=${{duration:5,repeat:Infinity,ease:"easeInOut"}} />
+          <${motion.div} className="absolute inset-0" style=${{background:"linear-gradient(105deg,transparent 44%,rgba(255,242,208,.5) 50%,transparent 56%)",mixBlendMode:"screen"}}
+            animate=${{x:["-130%","130%"]}} transition=${{duration:3,repeat:Infinity,repeatDelay:3,ease:"easeInOut"}} />
+        <//>
+        ${isMobile
+          ? html`<div className="absolute z-10" style=${{left:doorX,top:doorY,transform:"translate(-50%,-50%)"}}>
+              <${motion.div} initial=${{opacity:0,y:12}} whileInView=${{opacity:1,y:0}}
+                viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:1.3,delay:1.3,ease:"easeOut"}}>
+                <${GoldButton} onClick=${onEnter}>Entrer<//>
+              <//>
+            </div>`
+          : html`<${motion.div} className="absolute z-10" style=${{left:doorX,top:doorY,transform:"translate(-50%,-50%)"}}
+              initial=${{opacity:0,y:12}} whileInView=${{opacity:1,y:0}}
+              viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:1.3,delay:1.3,ease:"easeOut"}}>
+              <${GoldButton} onClick=${onEnter}>Entrer<//>
+            <//>`}
+      </div>
     </section>
   </div>`;
 }
@@ -593,6 +607,9 @@ function App(){
   const [phase,setPhase]=useState("cover");
   const [entering,setEntering]=useState(false);
   const [muted,setMuted]=useState(false);
+  const [isMobile,setIsMobile]=useState(()=>window.matchMedia("(max-width:639px)").matches);
+  useEffect(()=>{ const mq=window.matchMedia("(max-width:639px)"); const u=()=>setIsMobile(mq.matches);
+    mq.addEventListener("change",u); return ()=>mq.removeEventListener("change",u); },[]);
   const bellRung=useRef(false);
   useEffect(()=>{ if(!window.matchMedia("(pointer:coarse)").matches) document.body.classList.add("has-star"); },[]);
   useEffect(()=>{ const first=()=>{ if(!bellRung.current&&!isMuted.v){ bellRung.current=true; ctx(); setTimeout(playBell,120); }
@@ -605,16 +622,18 @@ function App(){
     <${StarCursor} />
     <${NightSky} dim=${phase==="store"} />
     <${MuteButton} muted=${muted} setMuted=${setMuted} entered=${phase==="store"} />
-    <${AnimatePresence}>${phase==="cover"?html`<${Cover} key="cover" onEnter=${enter} />`:null}<//>
-    <${AnimatePresence}>${entering?html`<${motion.div} key="enter" className="fixed inset-0 z-[90] overflow-hidden pointer-events-none" initial=${{opacity:1}} exit=${{opacity:0}} transition=${{duration:.5}}>
-      <!-- 扉へ吸い込まれるようにズーム（ゆっくり→加速で自然に） -->
-      <${motion.img} src="assets/TOP2.jpeg" className="absolute inset-0 w-full h-full object-cover" style=${{transformOrigin:"58% 82%",willChange:"transform"}}
-        initial=${{scale:1}} animate=${{scale:5.5}} transition=${{duration:2.3,ease:[.52,0,.82,.42]}} />
+    <${AnimatePresence}>${phase==="cover"?html`<${Cover} key="cover" onEnter=${enter} isMobile=${isMobile} />`:null}<//>
+    <${AnimatePresence}>${entering?html`<${motion.div} key="enter" className="fixed inset-0 z-[90] overflow-hidden pointer-events-none flex items-center justify-center" initial=${{opacity:1}} exit=${{opacity:0}} transition=${{duration:.5}}>
+      <!-- 扉へ吸い込まれるようにズーム（スマホは画像全体の箱を基準に） -->
+      <div className=${isMobile?"relative w-full aspect-[3/2]":"absolute inset-0"}>
+        <${motion.img} src="assets/TOP2.jpeg" className="absolute inset-0 w-full h-full object-cover" style=${{transformOrigin:isMobile?"50% 72%":"58% 82%",willChange:"transform"}}
+          initial=${{scale:1}} animate=${{scale:5.5}} transition=${{duration:2.3,ease:[.52,0,.82,.42]}} />
+      </div>
       <!-- トンネル状のビネット（扉に視線を集め、拡大した端のアラを隠す） -->
-      <${motion.div} className="absolute inset-0" style=${{background:"radial-gradient(circle at 58% 82%, transparent 18%, rgba(6,8,16,.9) 62%)"}}
+      <${motion.div} className="absolute inset-0" style=${{background:"radial-gradient(circle at "+(isMobile?"50% 57%":"58% 82%")+", transparent 18%, rgba(6,8,16,.9) 62%)"}}
         initial=${{opacity:0}} animate=${{opacity:1}} transition=${{duration:1.5,ease:"easeIn"}} />
       <!-- 扉から光があふれて包み込む -->
-      <${motion.div} className="absolute rounded-full" style=${{left:"58%",top:"82%",transform:"translate(-50%,-50%)",width:"22vmin",height:"22vmin",background:"radial-gradient(circle,#fff7e6 0%,#f6e9c8 40%,rgba(237,228,202,.7) 64%,transparent 82%)"}}
+      <${motion.div} className="absolute rounded-full" style=${{left:isMobile?"50%":"58%",top:isMobile?"57%":"82%",transform:"translate(-50%,-50%)",width:"22vmin",height:"22vmin",background:"radial-gradient(circle,#fff7e6 0%,#f6e9c8 40%,rgba(237,228,202,.7) 64%,transparent 82%)"}}
         initial=${{opacity:0,scale:.14}} animate=${{opacity:1,scale:22}} transition=${{duration:1.7,delay:.6,ease:[.45,0,.35,1]}} />
     <//>`:null}<//>
     ${phase==="store"?html`<${Store} />`:null}
