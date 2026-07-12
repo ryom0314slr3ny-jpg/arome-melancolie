@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pâtisserie Arômélancolie ｜ 夜にだけ現れる幻のパティスリー</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: { nighttop:'#07111F', nightmid:'#101A2B', nightbot:'#182635', midnight:'#101A2B',
+        ivory:'#EDE4CA', gold:'#B08D57', goldlight:'#d8b982', bordeaux:'#47081E' },
+      fontFamily: { title:['"Cormorant Garamond"','serif'], body:['"Noto Serif JP"','serif'], logo:['Cinzel','serif'] }
+    }}
+  }
+</script>
+<style>
+  html{scroll-behavior:smooth;} body{background:#07111F;overflow-x:hidden;}
+  ::selection{background:#B08D57;color:#101A2B;}
+  @media (pointer:fine){ body.has-star, body.has-star *{cursor:none;} body.has-star input, body.has-star textarea{cursor:text;} }
+  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.06)}}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001s!important;} }
+  #boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#B08D57;
+    font-family:'Cinzel',serif;letter-spacing:.3em;background:#07111F;z-index:1;}
+</style>
+
+<!-- React インスタンスを1つに固定（framer-motion と共有） -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18",
+    "react/": "https://esm.sh/react@18/",
+    "react-dom": "https://esm.sh/react-dom@18",
+    "react-dom/": "https://esm.sh/react-dom@18/",
+    "react-dom/client": "https://esm.sh/react-dom@18/client",
+    "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime",
+    "react/jsx-dev-runtime": "https://esm.sh/react@18/jsx-dev-runtime"
+  }
+}
+</script>
+</head>
+<body>
+<div id="root"><div id="boot">ARÔMÉLANCOLIE…</div></div>
+
+<script>
+  // 真っ白防止：どんなエラーも画面に表示する
+  function showErr(msg){
+    var r=document.getElementById('root');
+    if(r) r.innerHTML='<pre style="color:#e6a3a3;background:#101A2B;margin:0;min-height:100vh;'
+      +'padding:24px;font:13px/1.6 monospace;white-space:pre-wrap;">読み込みエラー:\n\n'+msg
+      +'\n\n※ インターネット接続をご確認のうえ Ctrl+F5 で再読み込みしてください。'
+      +'\nこのメッセージをそのまま伝えていただければ修正します。</pre>';
+  }
+  window.addEventListener('error', function(e){ showErr((e.message||e)+' @ '+(e.filename||'')+':'+(e.lineno||'')); });
+  window.addEventListener('unhandledrejection', function(e){ showErr('Promise: '+((e.reason&&e.reason.message)||e.reason||e)); });
+</script>
+
+<script type="module">
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createRoot } from "react-dom/client";
+import { motion, AnimatePresence, useMotionValue, useSpring, useScroll, useTransform } from "https://esm.sh/framer-motion@11?external=react,react-dom";
+import htm from "https://esm.sh/htm@3";
+const html = htm.bind(React.createElement);
+const F = React.Fragment;
+
+/* ===== データ ===== */
+const PRODUCTS = [
+  { fr:"Coffret Nocturne", ja:"夜想のクッキー缶", price:"¥3,200", img:"assets/prod-coffret.jpg",
+    lead:"眠れない夜のための詰め合わせ。バターとアーモンドのサブレを、一缶に静かに。",
+    ingredients:"小麦粉、バター、砂糖、卵、アーモンド、バニラ", allergy:"小麦・卵・乳・ナッツ", keep:"常温・製造から30日" },
+  { fr:"Nuit Blanche", ja:"眠れない夜に", price:"¥620", img:"assets/prod-nuitblanche.jpg",
+    lead:"白い夜。ふわりと軽いムースの奥に、蜂蜜のかすかな苦み。",
+    ingredients:"生クリーム、卵、砂糖、蜂蜜、ゼラチン、バニラ", allergy:"卵・乳", keep:"要冷蔵・当日中" },
+  { fr:"Minuit", ja:"真夜中", price:"¥680", img:"assets/prod-minuit.jpg",
+    lead:"深い夜のようなショコラ。ほろ苦さの底に、ひとさじの安らぎ。",
+    ingredients:"クーベルチュールチョコレート、生クリーム、卵、バター、砂糖", allergy:"卵・乳・大豆", keep:"要冷蔵・翌日まで" },
+  { fr:"Étoile", ja:"星の欠片", price:"¥580", img:"assets/prod-etoile.jpg",
+    lead:"星屑のようにきらめく、レモンとピスタチオの小さな菓子。",
+    ingredients:"アーモンド、ピスタチオ、卵白、砂糖、レモン", allergy:"卵・ナッツ", keep:"常温・3日以内" },
+  { fr:"Rêverie", ja:"まどろみ", price:"¥640", img:"assets/prod-reverie.jpg",
+    lead:"とろけるようなカスタードに、いちじくと木の実を添えて。",
+    ingredients:"牛乳、卵、砂糖、小麦粉、いちじく、ベリー", allergy:"卵・乳・小麦", keep:"要冷蔵・翌日まで" },
+];
+const CONCEPT = ["Bienvenue.","眠れない夜へようこそ。","ここは、","夜にだけ現れる","幻のパティスリー。","お菓子は、","誰かを幸せにするだけではなく、","眠れない夜に寄り添うものだと、","私たちは信じています。"];
+const NAV = [["store","Online store"],["access","Access"],["concept","Arômélancolie"],["contact","Contact"]];
+
+/* ===== 法務系サンプルページ（公開前に内容を確認・修正してください） ===== */
+const LEGAL = {
+  terms: { fr:"CONDITIONS D'UTILISATION", title:"利用規約", sections:[
+    { h:"第1条（適用）", body:["本規約は、Pâtisserie Arômélancolie（以下「当店」）が運営する本ウェブサイトおよび関連サービス（以下「本サービス」）の利用条件を定めるものです。利用者は本規約に同意のうえ本サービスを利用するものとします。"] },
+    { h:"第2条（禁止事項）", body:["利用者は、法令もしくは公序良俗に違反する行為、当店または第三者の権利・利益を侵害する行為、本サービスの運営を妨げる行為を行ってはなりません。"] },
+    { h:"第3条（免責事項）", body:["当店は、本サービスで提供する情報の正確性・完全性を保証するものではありません。本サービスの利用により利用者に生じた損害について、法令で認められる範囲で責任を負わないものとします。"] },
+    { h:"第4条（規約の変更）", body:["当店は、必要と判断した場合、利用者に事前の通知なく本規約を変更できるものとします。変更後の規約は本サイトに掲載した時点から効力を生じます。"] },
+    { h:"第5条（準拠法・管轄）", body:["本規約は日本法に準拠し、本サービスに関して紛争が生じた場合は、当店所在地を管轄する裁判所を第一審の専属的合意管轄裁判所とします。"] },
+    { body:["制定日：2026年〇月〇日"] }
+  ]},
+  privacy: { fr:"POLITIQUE DE CONFIDENTIALITÉ", title:"プライバシーポリシー", sections:[
+    { h:"1. 取得する情報", body:["当店は、商品のご注文・お問い合わせに際して、氏名・住所・電話番号・メールアドレス等の個人情報を取得することがあります。"] },
+    { h:"2. 利用目的", body:["取得した個人情報は、商品の発送・ご連絡・お問い合わせ対応・サービスの改善のために利用します。"] },
+    { h:"3. 第三者への提供", body:["当店は、法令に基づく場合を除き、ご本人の同意なく個人情報を第三者に提供しません。配送等のため、業務委託先に必要な範囲で提供する場合があります。"] },
+    { h:"4. Cookie等の利用", body:["本サイトは、利便性向上やアクセス解析のためCookie等を使用する場合があります。ブラウザの設定により無効化できます。"] },
+    { h:"5. 開示・訂正・削除", body:["ご本人からのお求めに応じ、保有する個人情報の開示・訂正・削除等に対応します。下記の窓口までご連絡ください。"] },
+    { h:"6. お問い合わせ窓口", body:["Pâtisserie Arômélancolie\nメール：contact@example.com"] },
+    { body:["制定日：2026年〇月〇日"] }
+  ]},
+  tokusho: { fr:"MENTIONS LÉGALES", title:"特定商取引法に基づく表記", sections:[
+    { body:["以下はサンプルです。実際の情報に差し替えてください。"] },
+    { h:"販売業者", body:["Pâtisserie Arômélancolie"] },
+    { h:"運営統括責任者", body:["〇〇 〇〇"] },
+    { h:"所在地", body:["〒000-0000　〇〇県〇〇市〇〇 0-0-0"] },
+    { h:"電話番号", body:["000-0000-0000（受付：21:00〜翌3:00）"] },
+    { h:"メールアドレス", body:["contact@example.com"] },
+    { h:"販売価格", body:["各商品ページに表示された価格（消費税込）"] },
+    { h:"商品代金以外の必要料金", body:["送料・決済手数料等（ご注文時に表示します）"] },
+    { h:"お支払い方法", body:["クレジットカード／銀行振込 等"] },
+    { h:"お支払い時期", body:["ご注文確定時（前払い）、または店頭お受け取り時"] },
+    { h:"商品の引渡し時期", body:["ご注文確認後、〇日以内に発送します（店頭受取の場合はご指定日時）。"] },
+    { h:"返品・交換について", body:["食品につき、お客様都合による返品・交換はお受けできません。不良品の場合は、到着後〇日以内にご連絡ください。良品と交換いたします。"] }
+  ]}
+};
+
+/* ===== トップの情景（写真ではなくCSS/SVGで描いた夜の教会パティスリー） ===== */
+const SCENE_SVG = `
+<svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="glassGlow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e3b4"/><stop offset=".55" stop-color="#e8c98c"/><stop offset="1" stop-color="#c99e5c"/></linearGradient>
+    <radialGradient id="roseGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#f8ecd0"/><stop offset=".6" stop-color="#e9c887"/><stop offset="1" stop-color="#b98f4e"/></radialGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#182338"/><stop offset="1" stop-color="#0d1626"/></linearGradient>
+    <radialGradient id="moonG" cx=".4" cy=".38" r=".62"><stop offset="0" stop-color="#fdfbf4"/><stop offset=".62" stop-color="#ece5d3"/><stop offset="1" stop-color="#c7c3b2"/></radialGradient>
+  </defs>
+  <style>.window-glow{transform-origin:center;opacity:0;animation:windowLight 3s ease-in-out forwards}@keyframes windowLight{0%{opacity:0}55%{opacity:0}100%{opacity:1}}</style>
+
+  <!-- 満月（左上・不要なら削除できます） -->
+  <circle cx="250" cy="180" r="94" fill="#e9e2cf" opacity=".07"/>
+  <circle cx="250" cy="180" r="64" fill="url(#moonG)"/>
+
+  <!-- 全体の地面 -->
+  <rect x="0" y="788" width="1440" height="112" fill="#0a1322"/>
+
+  <!-- 遠景の街並み（左下） -->
+  <g fill="#0a1322">
+    <rect x="30" y="640" width="70" height="150"/><polygon points="26,640 65,588 104,640"/>
+    <rect x="150" y="672" width="60" height="118"/><polygon points="146,672 180,634 214,672"/>
+    <rect x="250" y="700" width="80" height="90"/>
+    <rect x="360" y="676" width="60" height="114"/><polygon points="356,676 390,638 424,676"/>
+    <rect x="452" y="704" width="90" height="86"/>
+  </g>
+  <g fill="#c79a55"><rect x="70" y="672" width="6" height="9" opacity=".8"/><rect x="176" y="700" width="6" height="9" opacity=".6"/><rect x="384" y="702" width="6" height="9" opacity=".7"/></g>
+
+  <!-- 大聖堂＋店舗（右側へ配置） -->
+  <g transform="translate(560,120)">
+    <rect x="0" y="668" width="900" height="72" fill="#0a1322"/>
+    <g stroke="#16243a" stroke-width="1.5" fill="none" opacity=".7">
+      <ellipse cx="90" cy="692" rx="30" ry="7"/><ellipse cx="180" cy="706" rx="34" ry="8"/>
+      <ellipse cx="300" cy="690" rx="28" ry="7"/><ellipse cx="420" cy="708" rx="34" ry="8"/>
+      <ellipse cx="545" cy="692" rx="30" ry="7"/><ellipse cx="668" cy="706" rx="34" ry="8"/>
+      <ellipse cx="790" cy="690" rx="28" ry="7"/>
+    </g>
+    <rect x="270" y="300" width="580" height="370" fill="url(#stone)"/>
+    <g stroke="#0b1424" stroke-width="1" opacity=".45">
+      <line x1="270" y1="345" x2="850" y2="345"/><line x1="270" y1="385" x2="850" y2="385"/>
+      <line x1="400" y1="300" x2="400" y2="410"/><line x1="720" y1="300" x2="720" y2="410"/>
+    </g>
+    <polygon points="250,302 560,66 870,302" fill="#131e30"/>
+    <polyline points="244,306 560,60 876,306" fill="none" stroke="#1d2a40" stroke-width="8" stroke-linecap="round"/>
+    <g stroke="#2a3c5c" stroke-width="5" stroke-linecap="round"><line x1="560" y1="16" x2="560" y2="52"/><line x1="547" y1="28" x2="573" y2="28"/></g>
+    <rect x="300" y="172" width="72" height="138" fill="#111b2d"/>
+    <polygon points="292,176 336,64 380,176" fill="#16223a"/>
+    <g stroke="#2a3c5c" stroke-width="4" stroke-linecap="round"><line x1="336" y1="30" x2="336" y2="56"/><line x1="327" y1="39" x2="345" y2="39"/></g>
+    <path class="window-glow" style="animation-delay:.9s" d="M321 252 v-32 a15 15 0 0 1 30 0 v32 z" fill="#dcae62"/>
+    <g class="window-glow">
+      <circle cx="560" cy="212" r="80" fill="#e9c887" opacity=".14"/>
+      <circle cx="560" cy="212" r="66" fill="url(#roseGlow)"/>
+      <g fill="none" stroke="#101a2b" stroke-width="4">
+        <circle cx="560" cy="212" r="66"/><circle cx="560" cy="212" r="18"/>
+        <circle cx="560" cy="168" r="17"/><circle cx="560" cy="256" r="17"/><circle cx="516" cy="212" r="17"/><circle cx="604" cy="212" r="17"/>
+        <circle cx="529" cy="181" r="17"/><circle cx="591" cy="181" r="17"/><circle cx="529" cy="243" r="17"/><circle cx="591" cy="243" r="17"/>
+      </g>
+    </g>
+    <g class="window-glow" style="animation-delay:.4s">
+      <path d="M430 405 v-52 a22 22 0 0 1 44 0 v52 z" fill="#d8ac63"/><path d="M646 405 v-52 a22 22 0 0 1 44 0 v52 z" fill="#d8ac63"/>
+      <g stroke="#101a2b" stroke-width="3" fill="none"><path d="M430 405 v-52 a22 22 0 0 1 44 0 v52"/><line x1="452" y1="331" x2="452" y2="405"/><path d="M646 405 v-52 a22 22 0 0 1 44 0 v52"/><line x1="668" y1="331" x2="668" y2="405"/></g>
+    </g>
+    <g fill="#1e3348"><circle cx="285" cy="420" r="9"/><circle cx="296" cy="440" r="7"/><circle cx="282" cy="460" r="8"/><circle cx="838" cy="420" r="9"/><circle cx="828" cy="444" r="7"/><circle cx="840" cy="466" r="8"/><circle cx="620" cy="300" r="8"/><circle cx="640" cy="312" r="6"/><circle cx="480" cy="304" r="7"/></g>
+    <g fill="#7e4a5e" opacity=".85"><circle cx="290" cy="430" r="3.4"/><circle cx="286" cy="452" r="3"/><circle cx="834" cy="432" r="3.4"/><circle cx="836" cy="456" r="3"/><circle cx="630" cy="306" r="3"/><circle cx="486" cy="310" r="2.6"/></g>
+    <path d="M292 412 h536 l24 56 h-584 z" fill="#0d1526"/>
+    <g stroke="#141f33" stroke-width="13" opacity=".55"><line x1="350" y1="414" x2="342" y2="466"/><line x1="440" y1="414" x2="434" y2="466"/><line x1="530" y1="414" x2="526" y2="466"/><line x1="620" y1="414" x2="616" y2="466"/><line x1="710" y1="414" x2="706" y2="466"/><line x1="795" y1="414" x2="791" y2="466"/></g>
+    <path d="M292 412 h536 l24 56 h-584 z" fill="none" stroke="#B08D57" stroke-width="1.6" opacity=".7"/>
+    <path d="M268 468 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 Z" fill="#0d1526" stroke="#B08D57" stroke-width="1.4" opacity=".95"/>
+    <text x="560" y="436" text-anchor="middle" font-size="14" letter-spacing="7" fill="#cfa96e" style="font-family:'Cinzel',serif">PÂTISSERIE</text>
+    <text x="560" y="462" text-anchor="middle" font-size="27" fill="#e7cf9b" style="font-family:'Cormorant Garamond',serif">Arômélancolie</text>
+    <rect x="285" y="468" width="550" height="200" fill="#0a1120"/>
+    <rect x="300" y="484" width="190" height="170" fill="url(#glassGlow)"/><rect x="630" y="484" width="190" height="170" fill="url(#glassGlow)"/>
+    <path d="M506 484 h108 v54 a54 54 0 0 0 -108 0 z" fill="url(#glassGlow)"/>
+    <g stroke="#0a1120" stroke-width="3" fill="none" opacity=".9"><line x1="395" y1="484" x2="395" y2="654"/><line x1="725" y1="484" x2="725" y2="654"/><path d="M506 538 a54 54 0 0 1 108 0"/></g>
+    <g stroke="#8a6431" stroke-width="3" opacity=".85"><line x1="306" y1="530" x2="484" y2="530"/><line x1="306" y1="568" x2="484" y2="568"/></g>
+    <g fill="#6b4a26"><rect x="318" y="512" width="11" height="17" rx="2"/><rect x="338" y="508" width="9" height="21" rx="2"/><circle cx="366" cy="521" r="8"/><rect x="384" y="510" width="11" height="19" rx="2"/><circle cx="416" cy="522" r="7"/><rect x="432" y="512" width="10" height="17" rx="2"/><rect x="456" y="508" width="9" height="21" rx="2"/><rect x="316" y="550" width="10" height="17" rx="2"/><circle cx="344" cy="560" r="7"/><rect x="362" y="548" width="11" height="19" rx="2"/><circle cx="394" cy="559" r="8"/><rect x="412" y="551" width="9" height="16" rx="2"/><circle cx="440" cy="560" r="7"/><rect x="458" y="549" width="10" height="18" rx="2"/></g>
+    <rect x="314" y="606" width="160" height="48" rx="8" fill="#f4e3bd" stroke="#7a5a2e" stroke-width="3"/>
+    <g fill="#9c6a30"><circle cx="334" cy="636" r="5"/><circle cx="356" cy="636" r="5"/><circle cx="378" cy="636" r="5"/><circle cx="400" cy="636" r="5"/><circle cx="422" cy="636" r="5"/><circle cx="446" cy="636" r="5"/></g>
+    <g fill="#8e3d3d"><circle cx="345" cy="620" r="4.4"/><circle cx="379" cy="620" r="4.4"/><circle cx="413" cy="620" r="4.4"/><circle cx="447" cy="620" r="4.4"/></g>
+    <g stroke="#3d2c12" stroke-width="3" fill="none"><line x1="725" y1="484" x2="725" y2="502"/><path d="M695 514 q30 20 60 0"/><line x1="695" y1="514" x2="695" y2="508"/><line x1="755" y1="514" x2="755" y2="508"/></g>
+    <circle cx="725" cy="512" r="26" fill="#ffd98a" opacity=".18"/>
+    <g fill="#ffd98a"><circle cx="695" cy="505" r="3.6"/><circle cx="725" cy="500" r="3.6"/><circle cx="755" cy="505" r="3.6"/></g>
+    <g stroke="#8a6431" stroke-width="3" opacity=".85"><line x1="636" y1="556" x2="814" y2="556"/><line x1="636" y1="596" x2="814" y2="596"/></g>
+    <g fill="#6b4a26"><rect x="646" y="538" width="10" height="17" rx="2"/><circle cx="676" cy="547" r="7"/><rect x="694" y="536" width="11" height="19" rx="2"/><circle cx="726" cy="548" r="8"/><rect x="744" y="538" width="9" height="17" rx="2"/><circle cx="772" cy="547" r="7"/><rect x="790" y="536" width="10" height="19" rx="2"/><circle cx="656" cy="586" r="7"/><rect x="674" y="578" width="10" height="17" rx="2"/><circle cx="704" cy="587" r="8"/><rect x="724" y="576" width="11" height="19" rx="2"/><circle cx="756" cy="586" r="7"/><rect x="774" y="578" width="10" height="17" rx="2"/><rect x="796" y="580" width="9" height="15" rx="2"/></g>
+    <g><ellipse cx="690" cy="640" rx="26" ry="8" fill="#e8d3a4"/><rect x="664" y="622" width="52" height="18" rx="4" fill="#f0e0b8"/><circle cx="690" cy="618" r="4" fill="#8e3d3d"/><ellipse cx="770" cy="642" rx="22" ry="7" fill="#e8d3a4"/><rect x="748" y="628" width="44" height="14" rx="4" fill="#d9b98a"/></g>
+    <path d="M508 664 V538 a52 52 0 0 1 104 0 V664 Z" fill="#f2e2bf"/>
+    <path d="M508 664 V538 A52 52 0 0 1 560 486 V664 Z" fill="#1c1108"/><path d="M612 664 V538 A52 52 0 0 0 560 486 V664 Z" fill="#150c05"/>
+    <line x1="524" y1="520" x2="524" y2="652" stroke="#0d0803" stroke-width="3"/><line x1="596" y1="520" x2="596" y2="652" stroke="#0a0602" stroke-width="3"/>
+    <circle cx="549" cy="596" r="3.2" fill="#B08D57"/><circle cx="571" cy="596" r="3.2" fill="#B08D57"/>
+    <line x1="222" y1="668" x2="222" y2="424" stroke="#0e1728" stroke-width="8"/>
+    <polygon points="200,382 244,382 222,362" fill="#0e1728"/><rect x="204" y="382" width="36" height="46" rx="4" fill="#0e1728"/>
+    <rect class="window-glow" style="animation-delay:1.1s" x="210" y="388" width="24" height="34" rx="3" fill="#e8c169"/>
+    <circle cx="222" cy="405" r="34" fill="#e8c169" opacity=".1"/>
+    <line x1="844" y1="472" x2="868" y2="472" stroke="#0e1728" stroke-width="5"/><rect x="858" y="472" width="28" height="38" rx="3" fill="#0e1728"/>
+    <rect class="window-glow" style="animation-delay:1.3s" x="863" y="477" width="18" height="28" rx="2" fill="#e8c169"/>
+    <circle cx="872" cy="491" r="24" fill="#e8c169" opacity=".1"/>
+    <g><rect x="352" y="556" width="106" height="118" rx="6" fill="#0c1526" stroke="#B08D57" stroke-width="2"/><rect x="360" y="564" width="90" height="102" rx="4" fill="#0f1a2e"/>
+      <g fill="#cbb27a" text-anchor="middle" style="font-family:'Cormorant Garamond',serif;font-style:italic"><text x="405" y="592" font-size="12">Pour les âmes</text><text x="405" y="610" font-size="11">qui ne dorment pas,</text><text x="405" y="630" font-size="12">un doux rêve</text><text x="405" y="648" font-size="12">sucré…</text></g>
+    </g>
+    <g fill="#0c1526"><ellipse cx="120" cy="638" rx="56" ry="10"/><rect x="116" y="640" width="8" height="30"/><ellipse cx="120" cy="671" rx="26" ry="5"/></g>
+    <path d="M92 630 a26 22 0 0 1 52 0 z" fill="#16233a"/><circle cx="118" cy="606" r="3" fill="#B08D57"/>
+    <rect x="158" y="616" width="7" height="15" fill="#d8cdb2"/><circle class="window-glow" style="animation-delay:1.5s" cx="161.5" cy="610" r="4.4" fill="#ffd98a"/><circle cx="161.5" cy="610" r="12" fill="#ffd98a" opacity=".14"/>
+    <g><circle cx="266" cy="646" r="16" fill="#152c40"/><circle cx="286" cy="656" r="13" fill="#183349"/><circle cx="250" cy="658" r="12" fill="#122738"/><circle cx="262" cy="642" r="6" fill="#a86279"/><circle cx="282" cy="650" r="5" fill="#8e4a63"/><circle cx="252" cy="652" r="5.4" fill="#c08ba0"/><circle cx="272" cy="660" r="4.6" fill="#8e4a63"/></g>
+    <g><circle cx="812" cy="636" r="20" fill="#152c40"/><circle cx="844" cy="648" r="17" fill="#183349"/><circle cx="782" cy="652" r="14" fill="#122738"/><circle cx="866" cy="632" r="13" fill="#152c40"/><circle cx="806" cy="628" r="7.5" fill="#c08ba0"/><circle cx="830" cy="642" r="6.5" fill="#a86279"/><circle cx="852" cy="630" r="6" fill="#8e4a63"/><circle cx="788" cy="644" r="6" fill="#a86279"/><circle cx="868" cy="644" r="5.4" fill="#c08ba0"/><circle cx="818" cy="654" r="5" fill="#8e4a63"/></g>
+  </g>
+</svg>`;
+
+/* ===== 疑似環境音 ===== */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx=null, ambientNodes=null; const isMuted={v:false};
+function ctx(){ try{ if(!actx&&AudioCtx) actx=new AudioCtx(); if(actx&&actx.state==="suspended") actx.resume(); }catch(e){} return actx; }
+function playBell(){ const c=ctx(); if(!c||isMuted.v) return; const t=c.currentTime;
+  [523.25,659.25,784.0,1046.5].forEach((f,i)=>{ const o=c.createOscillator(),g=c.createGain();
+    o.type=i===0?"sine":"triangle"; o.frequency.value=f; g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.16/(i+1),t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+3.2+i*0.3);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t+3.6+i*0.3); }); }
+function playDoor(){ const c=ctx(); if(!c||isMuted.v) return; const t=c.currentTime,dur=1.8;
+  const buf=c.createBuffer(1,c.sampleRate*dur,c.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+  const src=c.createBufferSource(); src.buffer=buf; const f=c.createBiquadFilter(); f.type="lowpass";
+  f.frequency.setValueAtTime(220,t); f.frequency.linearRampToValueAtTime(90,t+dur);
+  const g=c.createGain(); g.gain.setValueAtTime(0.28,t); g.gain.linearRampToValueAtTime(0.001,t+dur);
+  src.connect(f).connect(g).connect(c.destination); src.start(t); }
+// 入店の音：ふわっと上昇するきらめき＋温かい低音（＝光の中へ）
+function playEnter(){
+  const c=ctx(); if(!c||isMuted.v) return; const t=c.currentTime;
+  const notes=[523.25,659.25,783.99,1046.5,1318.5]; // C5 E5 G5 C6 E6
+  notes.forEach((f,i)=>{
+    const o=c.createOscillator(), g=c.createGain(), st=t+i*0.075;
+    o.type="sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(0,st); g.gain.linearRampToValueAtTime(0.11/(1+i*0.15),st+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,st+1.5);
+    o.connect(g).connect(c.destination); o.start(st); o.stop(st+1.7);
+  });
+  const o2=c.createOscillator(), g2=c.createGain();
+  o2.type="sine"; o2.frequency.setValueAtTime(120,t); o2.frequency.exponentialRampToValueAtTime(72,t+1.3);
+  g2.gain.setValueAtTime(0.0001,t); g2.gain.linearRampToValueAtTime(0.16,t+0.08); g2.gain.exponentialRampToValueAtTime(0.0001,t+1.5);
+  o2.connect(g2).connect(c.destination); o2.start(t); o2.stop(t+1.7);
+}
+function startAmbient(){ const c=ctx(); if(!c||isMuted.v||ambientNodes) return;
+  const buf=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.5;
+  const src=c.createBufferSource(); src.buffer=buf; src.loop=true;
+  const f=c.createBiquadFilter(); f.type="lowpass"; f.frequency.value=380;
+  const g=c.createGain(); g.gain.value=0.015; src.connect(f).connect(g).connect(c.destination); src.start(); ambientNodes={src}; }
+function stopAmbient(){ if(ambientNodes){ try{ambientNodes.src.stop();}catch(e){} ambientNodes=null; } }
+
+/* ===== カーソル（金の星） ===== */
+function StarCursor(){
+  const x=useMotionValue(-100), y=useMotionValue(-100);
+  const sx=useSpring(x,{stiffness:600,damping:40}), sy=useSpring(y,{stiffness:600,damping:40});
+  const gx=useSpring(x,{stiffness:120,damping:20}), gy=useSpring(y,{stiffness:120,damping:20});
+  useEffect(()=>{ const m=e=>{x.set(e.clientX);y.set(e.clientY);}; window.addEventListener("pointermove",m);
+    return ()=>window.removeEventListener("pointermove",m); },[]);
+  if(window.matchMedia("(pointer:coarse)").matches) return null;
+  return html`<${F}>
+    <${motion.div} className="fixed top-0 left-0 z-[9999] pointer-events-none rounded-full"
+      style=${{x:gx,y:gy,width:34,height:34,marginLeft:-17,marginTop:-17,background:"radial-gradient(circle,rgba(176,141,87,.30),transparent 70%)"}} />
+    <${motion.div} className="fixed top-0 left-0 z-[9999] pointer-events-none"
+      style=${{x:sx,y:sy,width:18,height:18,marginLeft:-9,marginTop:-9,background:"#dcbd82",borderRadius:"50%",
+        WebkitMaskImage:"radial-gradient(circle at 70% 30%, transparent 55%, #000 57%)",
+        maskImage:"radial-gradient(circle at 70% 30%, transparent 55%, #000 57%)",
+        filter:"drop-shadow(0 0 5px rgba(216,185,130,.9))"}} />
+  <//>`;
+}
+
+/* ===== 夜空 ===== */
+function NightSky({dim}){
+  const [shoots,setShoots]=useState([]);
+  useEffect(()=>{ if(dim) return; let n=0;
+    const id=setInterval(()=>{ n++; const s={id:n,left:15+Math.random()*55,top:8+Math.random()*22};
+      setShoots(p=>[...p,s]); setTimeout(()=>setShoots(p=>p.filter(q=>q.id!==s.id)),1600); },4200);
+    return ()=>clearInterval(id); },[dim]);
+  const stars=[[18,22],[74,16],[52,30]], faint=[[33,12],[86,34]], clouds=[[10,160,0],[40,190,-60]];
+  return html`<div aria-hidden className="fixed inset-0 -z-10 overflow-hidden transition-opacity duration-[1600ms]"
+      style=${{opacity:dim?0:1, background:"linear-gradient(180deg,#07111F 0%,#101A2B 55%,#182635 100%)"}}>
+    ${stars.map((s,i)=>html`<${motion.span} key=${"s"+i} className="absolute rounded-full"
+      style=${{left:s[0]+"vw",top:s[1]+"vh",width:3,height:3,background:"#d8b982",boxShadow:"0 0 12px 2px rgba(216,185,130,.8)"}}
+      animate=${{opacity:[.3,1,.3]}} transition=${{duration:5,repeat:Infinity,delay:i}} />`)}
+    ${faint.map((s,i)=>html`<span key=${"f"+i} className="absolute rounded-full bg-white/50"
+      style=${{left:s[0]+"vw",top:s[1]+"vh",width:1.5,height:1.5}} />`)}
+    ${clouds.map((c,i)=>html`<${motion.div} key=${"c"+i} className="absolute blur-lg rounded-full"
+      style=${{top:c[0]+"vh",width:"42vw",height:"16vh",background:"radial-gradient(ellipse,rgba(70,90,120,.28),transparent 70%)"}}
+      initial=${{x:"-18vw"}} animate=${{x:"118vw"}} transition=${{duration:c[1],delay:c[2],repeat:Infinity,ease:"linear"}} />`)}
+    ${shoots.map(s=>html`<${motion.span} key=${s.id} className="absolute rounded-full"
+      style=${{left:s.left+"vw",top:s.top+"vh",width:2,height:2,background:"#d8b982",boxShadow:"0 0 8px 2px rgba(216,185,130,.8)"}}
+      initial=${{opacity:0,x:0,y:0}} animate=${{opacity:[0,1,0],x:140,y:200}} transition=${{duration:1.5,ease:"easeOut"}} />`)}
+  </div>`;
+}
+
+/* ===== ローディング：本が開く ===== */
+function Loader({onDone}){
+  useEffect(()=>{ const t=setTimeout(onDone,3000); return ()=>clearTimeout(t); },[onDone]);
+  return html`<${motion.div} className="fixed inset-0 z-[100] flex items-center justify-center"
+      style=${{background:"radial-gradient(circle at 50% 42%,#122036,#060f1c 74%)",perspective:1600}}
+      initial=${{opacity:1}} exit=${{opacity:0,scale:1.35}} transition=${{duration:1,ease:"easeInOut"}}>
+    <${motion.div} className="relative" style=${{width:"min(300px,64vw)",aspectRatio:"730/1144",transformStyle:"preserve-3d"}}
+        initial=${{opacity:0,y:34,scale:.94}} animate=${{opacity:1,y:0,scale:1}} transition=${{duration:1,ease:[.4,0,.2,1]}}>
+      <div className="absolute inset-0 rounded-[3px] flex items-center justify-center"
+        style=${{background:"radial-gradient(130% 100% at 100% 50%,#f5efdc,#e7dcbc)",boxShadow:"0 30px 60px rgba(0,0,0,.5)"}}>
+        <${motion.div} className="text-center font-logo text-[#9a6f30] tracking-[.16em] leading-relaxed"
+          style=${{fontSize:"clamp(15px,3vw,20px)"}} initial=${{opacity:0}} animate=${{opacity:1}} transition=${{delay:2.1,duration:1}}>
+          Pâtisserie<br/>Arômélancolie
+        <//>
+      </div>
+      <${motion.div} className="absolute inset-0 origin-left" style=${{transformStyle:"preserve-3d",backfaceVisibility:"hidden"}}
+          initial=${{rotateY:0}} animate=${{rotateY:-158}} transition=${{delay:1,duration:1.6,ease:[.42,.02,.2,1]}}>
+        <img src="assets/book-cover.png" alt="Arômélancolie" className="w-full h-full object-contain"
+          style=${{filter:"drop-shadow(0 10px 20px rgba(0,0,0,.35))"}}
+          onError=${(e)=>{ const el=e.currentTarget; el.style.display="none"; el.parentElement.style.background="linear-gradient(135deg,#33061a,#47081E)"; el.parentElement.style.border="1px solid rgba(176,141,87,.4)"; }} />
+      <//>
+    <//>
+  <//>`;
+}
+
+/* ===== 金ボタン ===== */
+function GoldButton({children,onClick,solid}){
+  return html`<${motion.button} onClick=${onClick}
+    className=${"relative font-logo tracking-[.24em] rounded-[2px] overflow-hidden px-11 py-4 "+(solid?"text-ivory":"text-goldlight border border-gold")}
+    style=${solid?{background:"linear-gradient(135deg,#B08D57,#8f6f3f)"}:{}}
+    whileHover=${solid?{boxShadow:"0 0 30px rgba(176,141,87,.7)",y:-2}:{color:"#101A2B",boxShadow:"0 0 28px rgba(176,141,87,.65), inset 0 0 40px rgba(216,185,130,.35)"}}
+    whileTap=${{boxShadow:"0 0 50px rgba(216,185,130,1), inset 0 0 60px rgba(216,185,130,.6)"}}
+    transition=${{duration:.4}}>${children}<//>`;
+}
+
+/* ===== 表紙：夜空から教会が現れる → Entrer ===== */
+function Cover({onEnter}){
+  const stars=[[12,14],[27,9],[45,20],[62,11],[77,23],[87,7],[20,29],[70,31],[37,6],[55,16]];
+  const scref=useRef(null);
+  const { scrollYProgress } = useScroll({ container: scref });
+  const titleOp = useTransform(scrollYProgress, [0, 0.28], [1, 0]);
+  const titleY  = useTransform(scrollYProgress, [0, 0.28], [0, -60]);
+  const hintOp  = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  return html`<div ref=${scref} className="fixed inset-0 z-10 overflow-y-auto snap-y snap-mandatory">
+    <!-- ① 夜空（TOP1）＋星＋タイトル（スクロールで消える） -->
+    <section className="relative h-screen w-full snap-start overflow-hidden">
+      <img src="assets/TOP1.png" alt="夜空" className="absolute inset-0 w-full h-full object-cover"
+        style=${{filter:"brightness(.6) saturate(.5) contrast(1.04)"}} />
+      <div className="absolute inset-0 pointer-events-none" style=${{background:"rgba(20,17,28,.42)"}}></div>
+      <div className="absolute inset-x-0 bottom-0 pointer-events-none" style=${{height:"40%",background:"linear-gradient(0deg,rgba(11,9,18,.85),transparent)"}}></div>
+      ${stars.map((s,i)=>html`<${motion.span} key=${i} className="absolute rounded-full"
+        style=${{left:s[0]+"vw",top:s[1]+"vh",width:i%3===0?3:2,height:i%3===0?3:2,background:"#fdf6e6",boxShadow:"0 0 8px 1px rgba(253,246,230,.8)"}}
+        animate=${{opacity:[.25,1,.25]}} transition=${{duration:4+(i%3),repeat:Infinity,delay:i*.4}} />`)}
+      <!-- タイトル -->
+      <${motion.div} className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 pointer-events-none"
+        style=${{opacity:titleOp, y:titleY}}>
+        <${motion.p} className="font-title italic text-goldlight/90 tracking-[.16em]" style=${{fontSize:"clamp(15px,2vw,22px)"}}
+          initial=${{opacity:0,y:16}} animate=${{opacity:1,y:0}} transition=${{duration:2,delay:.6,ease:"easeOut"}}>Pâtisserie</${motion.p}>
+        <${motion.h1} className="font-title text-ivory mt-1" style=${{fontSize:"clamp(46px,8.5vw,96px)",letterSpacing:".03em",lineHeight:1,textShadow:"0 0 42px rgba(176,141,87,.5),0 4px 22px rgba(0,0,0,.5)"}}
+          initial=${{opacity:0,y:24}} animate=${{opacity:1,y:0}} transition=${{duration:2.6,delay:1,ease:"easeOut"}}>Arômélancolie</${motion.h1}>
+      <//>
+      <!-- スクロール誘導 -->
+      <${motion.p} className="absolute bottom-10 left-0 right-0 text-center font-title italic text-ivory/85 text-[15px] tracking-[.2em]"
+        style=${{opacity:hintOp}} animate=${{y:[0,10,0]}} transition=${{duration:2.6,repeat:Infinity,ease:"easeInOut"}}>scroll<//>
+    </section>
+    <!-- ② 教会（TOP2）：スクロールで“現れる”ようにフェードイン -->
+    <section className="relative h-screen w-full snap-start overflow-hidden">
+      <${motion.img} src="assets/TOP2.jpeg" alt="Pâtisserie Arômélancolie — 夜の教会のパティスリー"
+        className="absolute inset-0 w-full h-full object-cover"
+        initial=${{opacity:0,scale:1.08}} whileInView=${{opacity:1,scale:1}}
+        viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:2,ease:"easeOut"}} />
+      <!-- 店名（オーニング）に灯りと金のきらめきを重ねて“動かす” -->
+      <${motion.div} className="absolute overflow-hidden pointer-events-none" style=${{left:"46%",top:"36.5%",width:"31%",height:"15%"}}
+        initial=${{opacity:0}} whileInView=${{opacity:1}} viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:2,delay:.9,ease:"easeOut"}}>
+        <${motion.div} className="absolute inset-0" style=${{background:"radial-gradient(ellipse at 50% 55%,rgba(255,224,150,.22),transparent 70%)"}}
+          animate=${{opacity:[.4,.85,.4]}} transition=${{duration:5,repeat:Infinity,ease:"easeInOut"}} />
+        <${motion.div} className="absolute inset-0" style=${{background:"linear-gradient(105deg,transparent 44%,rgba(255,242,208,.5) 50%,transparent 56%)",mixBlendMode:"screen"}}
+          animate=${{x:["-130%","130%"]}} transition=${{duration:3,repeat:Infinity,repeatDelay:3,ease:"easeInOut"}} />
+      <//>
+      <${motion.div} className="absolute z-10" style=${{left:"52%",top:"72%",transform:"translate(-50%,-50%)"}}
+        initial=${{opacity:0,y:12}} whileInView=${{opacity:1,y:0}}
+        viewport=${{once:true,amount:.35,root:scref}} transition=${{duration:1.3,delay:1.3,ease:"easeOut"}}>
+        <${GoldButton} onClick=${onEnter}>Entrer<//>
+      <//>
+    </section>
+  </div>`;
+}
+
+/* ===== 店内パーツ ===== */
+function Head({fr,title,sub}){
+  return html`<div className="text-center mb-16">
+    <p className="font-logo tracking-[.24em] text-gold text-xs">${fr}</p>
+    <h2 className="font-title text-bordeaux mt-2" style=${{fontSize:"clamp(30px,5vw,52px)",fontWeight:500}}>${title}</h2>
+    ${sub?html`<p className="font-body text-[#5c5346] mt-3 text-sm">${sub}</p>`:null}
+  </div>`;
+}
+function Frame({fr,img}){
+  // プレースホルダーを常に背面に置き、画像があれば上に重ねる（画像未生成でも綺麗な枠に）
+  return html`<div className="relative w-full flex items-center justify-center overflow-hidden rounded-[2px]"
+      style=${{aspectRatio:"4/5",background:"linear-gradient(160deg,#1a2740,#0d1626)",boxShadow:"0 14px 40px rgba(71,8,30,.14)"}}>
+    <span className="absolute text-goldlight/25 text-3xl" style=${{top:"20%"}}>✦</span>
+    <span className="font-logo text-goldlight/70 tracking-[.2em] text-sm px-3 text-center">${fr}</span>
+    ${img?html`<img src=${img} alt=${fr} className="absolute inset-0 w-full h-full object-cover"
+      onError=${(e)=>{e.currentTarget.style.display="none";}} />`:null}
+  </div>`;
+}
+function ProductGrid({open}){
+  return html`<section className="max-w-5xl mx-auto px-6 pt-20 pb-28">
+    <${Head} fr="LES PÂTISSERIES" title="お菓子" sub="夜のためだけに焼き上げた、幻の菓子たち。" />
+    <div className="grid gap-x-10 gap-y-14" style=${{gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))"}}>
+      ${PRODUCTS.map((p,i)=>html`<${motion.div} key=${i} className="text-center cursor-pointer"
+        onClick=${()=>open(i)} whileHover=${{y:-8}}
+        initial=${{opacity:0,y:26}} whileInView=${{opacity:1,y:0}} viewport=${{once:true,amount:.2}}
+        transition=${{duration:.9,delay:i*0.1,ease:"easeOut"}}>
+        <${Frame} fr=${p.fr} img=${p.img} />
+        <h3 className="font-title text-midnight mt-5" style=${{fontSize:24}}>${p.ja}</h3>
+        <p className="font-logo text-gold text-xs tracking-[.2em] mt-1">${p.fr}</p>
+        <p className="font-title text-bordeaux mt-2 text-lg">${p.price}</p>
+      <//>`)}
+    </div>
+  </section>`;
+}
+function ProductDetail({p,back}){
+  const rows=[["原材料",p.ingredients],["アレルギー",p.allergy],["賞味期限",p.keep]];
+  return html`<section className="max-w-5xl mx-auto px-6 pt-20 pb-28">
+    <div className="grid md:grid-cols-2 gap-16 items-start">
+      <div className="relative w-full flex items-center justify-center overflow-hidden rounded-[2px]"
+        style=${{aspectRatio:"4/5",background:"linear-gradient(160deg,#1a2740,#0d1626)",boxShadow:"0 20px 50px rgba(71,8,30,.18)"}}>
+        <span className="font-logo text-goldlight tracking-[.2em] text-sm">写真：${p.fr}</span>
+        ${p.img?html`<img src=${p.img} alt=${p.fr} className="absolute inset-0 w-full h-full object-cover"
+          onError=${(e)=>{e.currentTarget.style.display="none";}} />`:null}
+      </div>
+      <div>
+        <p className="font-logo text-gold tracking-[.2em] text-xs mb-2">${p.fr}</p>
+        <h2 className="font-title text-bordeaux" style=${{fontSize:"clamp(28px,4vw,44px)",fontWeight:500}}>${p.ja}</h2>
+        <p className="font-body text-[#4a4238] my-6 text-[15px] leading-loose">${p.lead}</p>
+        <div className="border-t border-gold/40">
+          ${rows.map(r=>html`<div key=${r[0]} className="flex gap-4 py-3.5 border-b border-gold/25 text-sm">
+            <span className="font-title text-gold w-24 shrink-0">${r[0]}</span>
+            <span className="text-midnight">${r[1]}</span>
+          </div>`)}
+        </div>
+        <p className="font-title text-bordeaux my-6" style=${{fontSize:30}}>${p.price}</p>
+        <${GoldButton} solid onClick=${()=>alert("※ 購入機能は後で設定します（お支払い・在庫連携など）")}>購入する<//>
+        <div className="mt-10"><button onClick=${back} className="font-title italic text-gold hover:text-bordeaux">‹ お菓子の一覧へ戻る</button></div>
+      </div>
+    </div>
+  </section>`;
+}
+function Access(){
+  const rows=[["店名","Pâtisserie Arômélancolie"],["住所","〒000-0000　○○県○○市○○ 0-0-0"],
+    ["営業時間","21:00 〜 翌 3:00（夜にだけ現れる幻のパティスリー）"],["定休日","満月の夜"],["電話番号","000-0000-0000"]];
+  return html`<section className="max-w-3xl mx-auto px-6 pt-20 pb-28">
+    <${Head} fr="ACCÈS" title="Access" sub="夜にだけ、灯りをともします。" />
+    <table className="w-full"><tbody>
+      ${rows.map(r=>html`<tr key=${r[0]} className="border-b border-gold/30 align-top">
+        <th className="text-left py-4 pr-4 font-title text-gold font-medium whitespace-nowrap w-36">${r[0]}</th>
+        <td className="py-4 text-[15px] text-midnight">${r[1]}</td>
+      </tr>`)}
+    </tbody></table>
+    <p className="text-xs text-[#7a6f5f] mt-6 text-center">※ 実際の店舗情報に差し替えてください</p>
+  </section>`;
+}
+function Concept(){
+  return html`<section className="max-w-2xl mx-auto px-6 pt-20 pb-28 text-center">
+    <${Head} fr="NOTRE HISTOIRE" title="Arômélancolie" />
+    <div className="space-y-6">
+      ${CONCEPT.map((line,i)=>html`<${motion.p} key=${i}
+        className=${i===0?"font-title italic text-bordeaux":"font-body text-[#3f382f]"}
+        style=${{fontSize:i===0?"clamp(20px,3vw,26px)":"clamp(16px,2.2vw,19px)",lineHeight:2.4}}
+        initial=${{opacity:0,y:14}} whileInView=${{opacity:1,y:0}} viewport=${{once:true,amount:.5}}
+        transition=${{duration:1.1,delay:i*0.12,ease:"easeOut"}}>${line}<//>`)}
+    </div>
+    <div className="flex gap-6 justify-center mt-12">
+      ${["note","Instagram"].map(s=>html`<a key=${s} href="#" target="_blank" rel="noopener"
+        className="font-logo tracking-[.16em] text-gold border border-gold px-7 py-3 rounded-[2px] text-sm transition-colors hover:bg-gold hover:text-ivory">${s}</a>`)}
+    </div>
+    <p className="text-xs text-[#7a6f5f] mt-6">※ note・Instagram のURLを差し替えてください</p>
+  </section>`;
+}
+function Contact(){
+  const fields=[["件名","subject","text",true],["返信用アドレス","email","email",false]];
+  return html`<section className="max-w-xl mx-auto px-6 pt-20 pb-28">
+    <${Head} fr="CONTACT" title="Contact" sub="夜のあいだに、お便りを。" />
+    <form className="space-y-6" onSubmit=${e=>e.preventDefault()}>
+      ${fields.map(f=>html`<div key=${f[1]}>
+        <label className="block font-title text-bordeaux mb-2 text-base">${f[0]} ${f[3]?html`<span className="text-gold text-xs">必須</span>`:null}</label>
+        <input type=${f[2]} name=${f[1]} required=${f[3]}
+          className="w-full px-4 py-3.5 rounded-[2px] border border-gold/50 bg-white/50 text-[15px] text-midnight outline-none focus:border-gold focus:ring-2 focus:ring-gold/20" />
+      </div>`)}
+      <div>
+        <label className="block font-title text-bordeaux mb-2 text-base">用件 <span className="text-gold text-xs">必須</span></label>
+        <textarea name="message" rows="6" required
+          className="w-full px-4 py-3.5 rounded-[2px] border border-gold/50 bg-white/50 text-[15px] text-midnight outline-none focus:border-gold focus:ring-2 focus:ring-gold/20"></textarea>
+      </div>
+      <${GoldButton} solid>送る<//>
+      <p className="text-xs text-[#7a6f5f] text-center">※ 送信を実際に届くようにするには、後で送信先の設定が必要です。</p>
+    </form>
+  </section>`;
+}
+function Legal({which,go}){
+  const d=LEGAL[which]; if(!d) return null;
+  return html`<section className="max-w-3xl mx-auto px-6 pt-20 pb-28">
+    <${Head} fr=${d.fr} title=${d.title} />
+    <p className="text-xs text-[#a0704a] mb-10 text-center">※ これはサンプルです。公開前に内容をご確認・修正し、必要に応じて専門家にご確認ください。</p>
+    <div className="space-y-7 font-body text-[#3f382f] text-[15px] leading-loose">
+      ${d.sections.map((s,i)=>html`<div key=${i}>
+        ${s.h?html`<h3 className="font-title text-bordeaux text-xl mb-2">${s.h}</h3>`:null}
+        ${s.body.map((line,j)=>html`<p key=${j} className="whitespace-pre-line">${line}</p>`)}
+      </div>`)}
+    </div>
+    <div className="mt-14 text-center"><button onClick=${()=>go("store")} className="font-title italic text-gold hover:text-bordeaux">‹ Online store へ戻る</button></div>
+  </section>`;
+}
+function Footer({go}){
+  const links=[["terms","利用規約"],["privacy","プライバシーポリシー"],["tokusho","特定商取引法に基づく表記"]];
+  return html`<footer className="relative z-[5] bg-midnight text-ivory text-center px-6 pt-14 pb-11">
+    <div className="flex gap-5 justify-center flex-wrap text-[13px] font-title mb-6 opacity-80">
+      ${links.map((l,i)=>html`<${F} key=${l[0]}>
+        ${i>0?html`<span className="opacity-40">｜</span>`:null}
+        <button onClick=${()=>go(l[0])} className="hover:text-goldlight transition-colors">${l[1]}</button>
+      <//>`)}
+    </div>
+    <p className="font-logo tracking-[.16em] text-goldlight text-[13px] mb-3">© Pâtisserie Arômélancolie</p>
+    <p className="font-title italic text-ivory/90">À bientôt, lorsque la nuit reviendra.
+      <span className="block not-italic font-body text-xs opacity-60 mt-1.5">また夜になったら、お会いしましょう。</span>
+    </p>
+  </footer>`;
+}
+function Store(){
+  const [page,setPage]=useState("store"); const [idx,setIdx]=useState(0);
+  const go=useCallback((p)=>{ setPage(p); window.scrollTo(0,0); },[]);
+  const open=useCallback((i)=>{ setIdx(i); setPage("detail"); window.scrollTo(0,0); },[]);
+  let body=null;
+  if(page==="store") body=html`<${ProductGrid} open=${open} />`;
+  else if(page==="detail") body=html`<${ProductDetail} p=${PRODUCTS[idx]} back=${()=>go("store")} />`;
+  else if(page==="access") body=html`<${Access} />`;
+  else if(page==="concept") body=html`<${Concept} />`;
+  else if(page==="contact") body=html`<${Contact} />`;
+  else if(page==="terms"||page==="privacy"||page==="tokusho") body=html`<${Legal} which=${page} go=${go} />`;
+  return html`<${motion.div} className="relative z-[5] min-h-screen bg-ivory text-midnight"
+      initial=${{opacity:0}} animate=${{opacity:1}} transition=${{duration:1.4,delay:.3}}>
+    <!-- 店内のほのかな暖色の空気感 -->
+    <div className="fixed inset-0 pointer-events-none" style=${{zIndex:0,background:"radial-gradient(120% 60% at 50% 0%,rgba(176,141,87,.07),transparent 55%),radial-gradient(120% 90% at 50% 100%,rgba(71,8,30,.05),transparent 60%)"}}></div>
+    <${Nav} page=${page==="detail"?"store":page} go=${go} />
+    <div style=${{perspective:1600}}>
+      <${AnimatePresence} mode="wait">
+        <${motion.main} key=${page} initial=${{opacity:0,rotateY:14,x:40}} animate=${{opacity:1,rotateY:0,x:0}}
+          exit=${{opacity:0,x:-30}} transition=${{duration:.8,ease:[.22,.61,.36,1]}} style=${{transformOrigin:"left center"}}>
+          ${body}
+        <//>
+      <//>
+    </div>
+    <${Footer} go=${go} />
+  <//>`;
+}
+function Nav({page,go}){
+  return html`<nav className="sticky top-0 z-20 backdrop-blur border-b border-gold/30" style=${{background:"rgba(237,228,202,.9)"}}>
+    <div className="max-w-5xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+      <button onClick=${()=>go("store")} className="font-logo tracking-[.16em] text-bordeaux text-lg">Arômélancolie</button>
+      <div className="flex flex-wrap gap-6">
+        ${NAV.map(n=>html`<button key=${n[0]} onClick=${()=>go(n[0])}
+          className=${"font-title text-base tracking-wide transition-colors "+(page===n[0]?"text-bordeaux":"text-midnight/80 hover:text-bordeaux")}>${n[1]}</button>`)}
+      </div>
+    </div>
+  </nav>`;
+}
+function MuteButton({muted,setMuted,entered}){
+  return html`<button title=${muted?"音：オフ":"音：オン"}
+    onClick=${()=>{ const m=!muted; setMuted(m); isMuted.v=m; if(m) stopAmbient(); else { ctx(); if(entered) startAmbient(); } }}
+    className=${"fixed bottom-5 right-5 z-[950] w-11 h-11 rounded-full flex items-center justify-center border transition-all "+(entered?"border-gold/70 text-bordeaux":"border-gold/60 text-goldlight")}
+    style=${{background:entered?"rgba(237,228,202,.6)":"rgba(16,26,43,.5)",backdropFilter:"blur(4px)"}}>${muted?"✕":"♪"}</button>`;
+}
+
+/* ===== App ===== */
+function App(){
+  const [phase,setPhase]=useState("cover");
+  const [entering,setEntering]=useState(false);
+  const [muted,setMuted]=useState(false);
+  const bellRung=useRef(false);
+  useEffect(()=>{ if(!window.matchMedia("(pointer:coarse)").matches) document.body.classList.add("has-star"); },[]);
+  useEffect(()=>{ const first=()=>{ if(!bellRung.current&&!isMuted.v){ bellRung.current=true; ctx(); setTimeout(playBell,120); }
+      window.removeEventListener("pointerdown",first); window.removeEventListener("keydown",first); };
+    window.addEventListener("pointerdown",first); window.addEventListener("keydown",first);
+    return ()=>{ window.removeEventListener("pointerdown",first); window.removeEventListener("keydown",first); }; },[]);
+  const enter=()=>{ playEnter(); setEntering(true);
+    setTimeout(()=>{ setPhase("store"); setEntering(false); if(!isMuted.v) startAmbient(); window.scrollTo(0,0); },2450); };
+  return html`<${F}>
+    <${StarCursor} />
+    <${NightSky} dim=${phase==="store"} />
+    <${MuteButton} muted=${muted} setMuted=${setMuted} entered=${phase==="store"} />
+    <${AnimatePresence}>${phase==="cover"?html`<${Cover} key="cover" onEnter=${enter} />`:null}<//>
+    <${AnimatePresence}>${entering?html`<${motion.div} key="enter" className="fixed inset-0 z-[90] overflow-hidden pointer-events-none" initial=${{opacity:1}} exit=${{opacity:0}} transition=${{duration:.5}}>
+      <!-- 扉へ吸い込まれるようにズーム（ゆっくり→加速で自然に） -->
+      <${motion.img} src="assets/TOP2.jpeg" className="absolute inset-0 w-full h-full object-cover" style=${{transformOrigin:"58% 82%",willChange:"transform"}}
+        initial=${{scale:1}} animate=${{scale:5.5}} transition=${{duration:2.3,ease:[.52,0,.82,.42]}} />
+      <!-- トンネル状のビネット（扉に視線を集め、拡大した端のアラを隠す） -->
+      <${motion.div} className="absolute inset-0" style=${{background:"radial-gradient(circle at 58% 82%, transparent 18%, rgba(6,8,16,.9) 62%)"}}
+        initial=${{opacity:0}} animate=${{opacity:1}} transition=${{duration:1.5,ease:"easeIn"}} />
+      <!-- 扉から光があふれて包み込む -->
+      <${motion.div} className="absolute rounded-full" style=${{left:"58%",top:"82%",transform:"translate(-50%,-50%)",width:"22vmin",height:"22vmin",background:"radial-gradient(circle,#fff7e6 0%,#f6e9c8 40%,rgba(237,228,202,.7) 64%,transparent 82%)"}}
+        initial=${{opacity:0,scale:.14}} animate=${{opacity:1,scale:22}} transition=${{duration:1.7,delay:.6,ease:[.45,0,.35,1]}} />
+    <//>`:null}<//>
+    ${phase==="store"?html`<${Store} />`:null}
+  <//>`;
+}
+
+createRoot(document.getElementById("root")).render(html`<${App} />`);
+</script>
+</body>
+</html>

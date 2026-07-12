@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pâtisserie Arômélancolie ｜ 夜にだけ現れる幻のパティスリー</title>
+<meta name="description" content="眠れない夜へようこそ。夜にだけ現れる幻のパティスリー、Pâtisserie Arômélancolie.">
+
+<!-- ▼ フォント（Cinzel / Cormorant Garamond / Noto Serif JP）。ネット接続時に読み込まれます ▼ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   Pâtisserie Arômélancolie
+   カラー・フォント・世界観の設定
+   ============================================================ */
+:root{
+  --midnight:#101A2B;
+  --ivory:#EDE4CA;
+  --gold:#B08D57;
+  --gold-light:#d8b982;
+  --bordeaux:#47081E;
+  --night-top:#07111F;
+  --night-mid:#101A2B;
+  --night-bottom:#182635;
+
+  --font-title:"Cormorant Garamond","Noto Serif JP",serif;
+  --font-body:"Noto Serif JP",serif;
+  --font-logo:"Cinzel","Cormorant Garamond",serif;
+
+  --ease-slow:cubic-bezier(.22,.61,.36,1);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font-body);
+  color:var(--ivory);
+  background:var(--night-mid);
+  line-height:2;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+::selection{background:var(--gold);color:var(--midnight);}
+
+/* カスタムカーソル使用時、既定カーソルを消す（PCのみJSで付与） */
+body.has-moon,body.has-moon a,body.has-moon button{cursor:none;}
+
+/* ============================================================
+   ① ローディング：本が開く演出（ヨーロッパの革装丁の洋書）
+   洋書が浮かぶ → 表紙がゆっくり自然に開く → 扉ページが1枚めくれる
+   → 2ページ目に金のロゴが現れる → 押すと夜空（トップ）へ
+   ============================================================ */
+#loader{
+  position:fixed;inset:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  perspective:2200px;background:radial-gradient(circle at 50% 40%,#122036,#060f1c 74%);
+  transition:opacity 1.2s ease,transform 1.2s cubic-bezier(.5,0,.2,1);
+}
+body.loaded.gone #loader{opacity:0;transform:scale(1.5);pointer-events:none;}
+
+/* 本体（浮かび上がる） */
+.book2{position:relative;width:min(330px,72vw);aspect-ratio:3/4.05;transform-style:preserve-3d;
+  opacity:0;transform:translateY(40px) rotateX(10deg) rotateZ(-1deg) scale(.93);
+  animation:bookIn 1.3s cubic-bezier(.4,0,.2,1) .1s forwards;
+  filter:drop-shadow(0 40px 60px rgba(0,0,0,.6));}
+@keyframes bookIn{to{opacity:1;transform:rotateX(9deg) rotateZ(-1deg);}}
+
+/* 革の背表紙（隆起したバンド＝洋書の綴じ） */
+.book2 .spine2{position:absolute;top:0;bottom:0;left:-2px;width:22px;z-index:6;border-radius:4px 2px 2px 4px;
+  background:
+    repeating-linear-gradient(0deg,rgba(0,0,0,.45) 0 2px,rgba(216,185,130,.18) 2px 4px,transparent 4px 30px),
+    linear-gradient(90deg,#2a0512,#4a0c22 55%,rgba(0,0,0,.5));
+  box-shadow:inset -3px 0 6px rgba(0,0,0,.5),inset 2px 0 3px rgba(216,185,130,.25);}
+
+/* 金箔の小口（積み重なったページの断面） */
+.book2 .edge-fore{position:absolute;top:4px;bottom:4px;right:-6px;width:7px;z-index:3;border-radius:0 3px 3px 0;
+  background:repeating-linear-gradient(0deg,#e4c98f 0 1px,#a97f45 1px 2.2px);
+  box-shadow:2px 0 4px rgba(0,0,0,.45);}
+.book2 .edge-bottom{position:absolute;left:6px;right:-4px;bottom:-6px;height:7px;z-index:2;border-radius:0 0 3px 3px;
+  background:repeating-linear-gradient(90deg,#e4c98f 0 1px,#a97f45 1px 2.2px);box-shadow:0 2px 4px rgba(0,0,0,.4);}
+
+/* 中のページ（開いたときに見える2ページ目・アイボリーの古紙） */
+.book2 .pages{position:absolute;inset:0;border-radius:2px 7px 7px 2px;overflow:hidden;
+  background:
+    linear-gradient(90deg,rgba(60,40,20,.22),transparent 14%),               /* 綴じ側の陰 */
+    radial-gradient(130% 100% at 100% 50%,#f5efdc,#e7dcbc 90%);              /* 古い紙 */
+  box-shadow:0 30px 60px rgba(0,0,0,.5),inset -8px 0 16px rgba(90,60,30,.08);}
+.book2 .pages::before{content:"";position:absolute;top:8%;bottom:8%;left:11%;right:7%;
+  border:1px solid rgba(176,141,87,.3);}
+/* 開くまでページを覆う影（表紙が開くと自然に晴れる） */
+.page-shade{position:absolute;inset:0;z-index:2;
+  background:linear-gradient(95deg,rgba(20,10,4,.72),rgba(20,10,4,.2) 55%,transparent);opacity:1;}
+body.loaded .page-shade{animation:shadeOut 1.7s ease 1.8s forwards;}
+@keyframes shadeOut{to{opacity:0;}}
+
+/* 2ページ目のロゴ（押すと夜空トップへ） */
+.page-inner{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;text-align:center;opacity:0;animation:logoReveal 1.4s cubic-bezier(.3,0,.2,1) 3.6s forwards;}
+.pl-star{width:34px;height:34px;background:var(--gold);
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  filter:drop-shadow(0 0 8px rgba(176,141,87,.7));animation:starPulse 2.6s ease-in-out infinite;}
+.pl-title{font-family:var(--font-logo);color:#9a6f30;letter-spacing:.16em;line-height:1.6;
+  font-size:clamp(17px,3vw,23px);
+  text-shadow:0 1px 0 rgba(255,255,255,.4);}
+.pl-hint{font-family:var(--font-title);font-style:italic;color:#8a7a55;font-size:13px;letter-spacing:.06em;margin-top:6px;}
+.pl-hint span{display:block;font-style:normal;font-size:11px;opacity:.75;margin-top:2px;letter-spacing:.12em;}
+@keyframes logoReveal{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:none;}}
+#book-logo{cursor:pointer;}
+body.has-moon #book-logo{cursor:none;}
+#book-logo:hover .pl-star{filter:drop-shadow(0 0 16px rgba(176,141,87,1));}
+#book-logo:hover .pl-title{color:var(--bordeaux);}
+
+/* めくれる扉ページ（自然な速度・光のうつろい） */
+.leaf{position:absolute;inset:0;z-index:4;transform-origin:left center;backface-visibility:hidden;
+  border-radius:2px 7px 7px 2px;transform:rotateY(0);
+  background:radial-gradient(130% 100% at 0% 50%,#efe6c9,#f6f0dc 90%);
+  box-shadow:4px 0 16px rgba(0,0,0,.22);}
+.leaf::after{content:"";position:absolute;inset:0;border-radius:2px 7px 7px 2px;
+  background:linear-gradient(95deg,rgba(0,0,0,.28),transparent 60%);opacity:0;}
+body.loaded .leaf{animation:leafTurn 1.5s cubic-bezier(.45,.02,.25,1) 2.5s forwards;}
+body.loaded .leaf::after{animation:leafShade 1.5s ease 2.5s forwards;}
+@keyframes leafTurn{0%{transform:rotateY(0);}100%{transform:rotateY(-168deg);}}
+@keyframes leafShade{0%{opacity:0;}45%{opacity:.55;}100%{opacity:0;}}
+
+/* 革表紙（ゆっくり自然に開く） */
+.front-cover{position:absolute;inset:0;z-index:5;transform-origin:left center;transform-style:preserve-3d;transform:rotateY(0);}
+body.loaded .front-cover{animation:coverOpen 1.9s cubic-bezier(.42,.02,.2,1) 1.6s forwards;}
+@keyframes coverOpen{0%{transform:rotateY(0);}62%{transform:rotateY(-120deg);}100%{transform:rotateY(-170deg);}}
+.front-cover .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:2px 7px 7px 2px;}
+/* 表側：赤い革＋金の型押し */
+.front-cover .front{overflow:hidden;
+  background:
+    repeating-linear-gradient(94deg,rgba(0,0,0,.05) 0 2px,rgba(255,255,255,.02) 2px 5px),
+    repeating-linear-gradient(6deg,rgba(0,0,0,.04) 0 3px,transparent 3px 8px),
+    radial-gradient(120% 90% at 28% 18%,#5c1332,transparent 60%),
+    radial-gradient(130% 120% at 74% 92%,#280510,transparent 55%),
+    linear-gradient(135deg,#3d0a1e,var(--bordeaux));
+  box-shadow:inset 0 0 60px rgba(0,0,0,.65),inset 0 0 0 1px rgba(0,0,0,.4);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+/* 二重罫の金枠（型押し） */
+.front-cover .front::before{content:"";position:absolute;inset:15px;border:2px double var(--gold);
+  border-radius:2px;opacity:.85;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),0 0 6px rgba(176,141,87,.15);}
+/* 四隅の菱形飾り */
+.corner{position:absolute;width:13px;height:13px;border:1px solid var(--gold);transform:rotate(45deg);opacity:.85;z-index:2;}
+.corner.tl{top:24px;left:24px;} .corner.tr{top:24px;right:24px;}
+.corner.bl{bottom:24px;left:24px;} .corner.br{bottom:24px;right:24px;}
+/* 中央のメダリオン */
+.cover-emblem{position:relative;z-index:2;width:80px;height:80px;border-radius:50%;border:1.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 4px rgba(176,141,87,.16),inset 0 0 16px rgba(0,0,0,.45);}
+.cover-emblem::before{content:"";position:absolute;inset:7px;border-radius:50%;border:1px solid rgba(176,141,87,.5);}
+.cover-star{width:36px;height:36px;background:var(--gold-light);
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  filter:drop-shadow(0 0 8px rgba(216,185,130,.8));animation:starPulse 2.6s ease-in-out infinite;}
+@keyframes starPulse{0%,100%{filter:drop-shadow(0 0 6px rgba(216,185,130,.6));}50%{filter:drop-shadow(0 0 16px rgba(216,185,130,1));}}
+.cover-title{position:relative;z-index:2;font-family:var(--font-logo);color:var(--gold-light);
+  letter-spacing:.3em;text-indent:.3em;font-size:clamp(13px,2vw,16px);text-align:center;line-height:2;
+  text-shadow:0 1px 0 rgba(0,0,0,.5),0 0 10px rgba(216,185,130,.25);}
+.cover-sub{position:relative;z-index:2;font-family:var(--font-title);font-style:italic;
+  color:rgba(216,185,130,.75);font-size:12px;letter-spacing:.14em;}
+/* 裏側：革の内貼り（見返し） */
+.front-cover .back{transform:rotateY(180deg);
+  background:linear-gradient(270deg,#efe7cd,#ded2b0);box-shadow:inset 12px 0 20px rgba(60,40,20,.12);}
+.front-cover .back::before{content:"";position:absolute;inset:16px;border:1px solid rgba(176,141,87,.28);}
+
+/* ▼ この本の画像を表紙に使うとき（assets/book-cover.png 読み込み時） ▼ */
+.cover-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:3;
+  filter:drop-shadow(0 10px 20px rgba(0,0,0,.35));}
+/* 画像の本の縦横比に合わせ、CSSの飾り（枠・紋章・題字・背表紙・小口）は隠す */
+.book2.has-cover{aspect-ratio:730/1144;}
+.book2.has-cover .front{background:#0e1a2e;box-shadow:none;}
+.book2.has-cover .front::before,
+.book2.has-cover .corner,
+.book2.has-cover .cover-emblem,
+.book2.has-cover .cover-title,
+.book2.has-cover .cover-sub,
+.book2.has-cover .spine2,
+.book2.has-cover .edge-fore,
+.book2.has-cover .edge-bottom{display:none;}
+
+/* ============================================================
+   夜空（固定背景）＋ 星・雲
+   ============================================================ */
+#sky{
+  position:fixed;inset:0;z-index:-2;overflow:hidden;
+  background:linear-gradient(180deg,var(--night-top) 0%,var(--night-mid) 55%,var(--night-bottom) 100%);
+  transition:filter 2.4s var(--ease-slow),opacity 1.6s ease;
+}
+body.entered #sky{filter:brightness(1.15) saturate(1.05);}
+
+/* ※ 月は出さない（原案どおり）。夜空は星と雲だけ */
+.star{position:absolute;border-radius:50%;background:#fff;opacity:.9;
+  box-shadow:0 0 6px 1px rgba(255,255,255,.6);animation:twinkle 5s ease-in-out infinite;}
+.star.big{width:3px;height:3px;box-shadow:0 0 12px 2px rgba(216,185,130,.8);background:var(--gold-light);}
+@keyframes twinkle{0%,100%{opacity:.25;}50%{opacity:1;}}
+.cloud{position:absolute;background:radial-gradient(ellipse at center,rgba(70,90,120,.28),transparent 70%);
+  filter:blur(8px);border-radius:50%;animation:drift 160s linear infinite;}
+@keyframes drift{from{transform:translateX(-10vw);}to{transform:translateX(110vw);}}
+
+/* 流れ星（スクロールで少し流れる） */
+.shooting{position:fixed;width:2px;height:2px;background:var(--gold-light);border-radius:50%;
+  box-shadow:0 0 8px 2px rgba(216,185,130,.8);pointer-events:none;z-index:-1;opacity:0;}
+
+/* ============================================================
+   ② 表紙：ロゴ（夜空） → 教会 → Entrer
+   ============================================================ */
+#cover{position:relative;z-index:1;}
+.scene{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8vh 24px;position:relative;}
+
+@keyframes logoRise{0%{opacity:0;transform:translateY(24px);filter:blur(8px);}100%{opacity:1;transform:none;filter:blur(0);}}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(18px);}100%{opacity:1;transform:none;}}
+
+/* ── Scene 2：完成画像 top-hero.jpg が「スクロールで現れる」お店 ── */
+.photo-scene{display:block;padding:0;height:100vh;min-height:600px;overflow:hidden;}
+/* 画像はスクロールでふわりとせり上がって現れる */
+.photo-reveal{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;
+  opacity:0;transform:translateY(42px) scale(1.05);
+  transition:opacity 1.8s var(--ease-slow),transform 2s var(--ease-slow);}
+.photo-scene.revealed .photo-reveal{opacity:1;transform:none;}
+/* Entrer は左下（画像の文字の下あたり）。画像が現れた後にふわりと */
+.photo-scene .enter-row{position:absolute;z-index:3;left:min(8vw,110px);bottom:15vh;margin:0;text-align:left;
+  opacity:0;transform:translateY(16px);transition:opacity 1.4s ease .6s,transform 1.4s ease .6s;}
+.photo-scene.revealed .enter-row{opacity:1;transform:none;}
+.photo-scene .enter-caption{margin-top:14px;}
+/* 大聖堂の扉のクリック領域（画像の扉に合わせる） */
+.photo-scene .door-hotspot{left:55%;top:44%;width:13%;height:26%;}
+@media(max-width:760px){
+  .photo-scene .enter-row{left:0;right:0;bottom:9vh;text-align:center;}
+  .photo-reveal{object-position:30% center;}
+}
+
+/* ── Scene 1：夜空のみ。金の歓迎文が浮かぶ ── */
+.intro-scene{justify-content:center;text-align:center;}
+.welcome-fr{font-family:var(--font-title);font-style:italic;color:var(--gold);
+  font-size:clamp(15px,2.4vw,22px);letter-spacing:.14em;opacity:0;}
+.welcome-logo{font-family:var(--font-logo);color:var(--gold-light);letter-spacing:.22em;
+  font-size:clamp(30px,6vw,68px);line-height:1.25;margin-top:.35em;
+  text-shadow:0 0 30px rgba(176,141,87,.5);opacity:0;}
+/* 本を開いて夜空トップが現れた瞬間に、金文字がふわりと浮かぶ */
+body.gone .welcome-fr{animation:fadeUp 2.4s var(--ease-slow) .8s forwards;}
+body.gone .welcome-logo{animation:logoRise 3s var(--ease-slow) 1.5s forwards;}
+
+/* ── Scene 2：スクロールで教会が現れる ── */
+.church-scene{justify-content:center;align-items:flex-start;text-align:left;
+  padding-left:min(9vw,120px);overflow:hidden;}
+/* 大聖堂（透過PNG）を右下に。スクロールで“せり上がって現れる” */
+.church-stage{position:absolute;right:1vw;bottom:0;z-index:2;height:min(90vh,880px);pointer-events:none;
+  opacity:0;transform:translateY(70px);
+  transition:opacity 1.8s var(--ease-slow),transform 2s var(--ease-slow);}
+.church-scene.revealed .church-stage{opacity:1;transform:none;}
+.building-img{height:100%;width:auto;display:block;filter:drop-shadow(-16px 6px 46px rgba(0,0,0,.55));}
+/* 扉のクリック領域（PNGの扉の位置に重ねる） */
+.door-hotspot{position:absolute;left:41%;top:60%;width:18%;height:22%;pointer-events:auto;cursor:pointer;
+  background:transparent;border:none;border-radius:45% 45% 6px 6px;transition:background .5s,box-shadow .5s;}
+body.has-moon .door-hotspot{cursor:none;}
+.door-hotspot:hover{background:radial-gradient(circle at 50% 62%,rgba(255,217,138,.4),transparent 68%);
+  box-shadow:0 0 34px rgba(255,217,138,.45);}
+/* ロゴ＋Entrer（教会が現れた後にふわりと） */
+.church-copy{position:relative;z-index:3;max-width:460px;
+  opacity:0;transform:translateY(20px);
+  transition:opacity 1.4s ease .5s,transform 1.4s ease .5s;}
+.church-scene.revealed .church-copy{opacity:1;transform:none;}
+.church-copy .hc-small{font-family:var(--font-title);color:var(--ivory);
+  font-size:clamp(17px,2.2vw,24px);letter-spacing:.3em;display:block;}
+.church-copy .hc-title{font-family:var(--font-title);font-weight:500;color:#f0e6c8;
+  font-size:clamp(40px,7vw,84px);letter-spacing:.02em;line-height:1.05;margin-top:2px;
+  text-shadow:0 0 34px rgba(176,141,87,.45),0 4px 20px rgba(0,0,0,.5);}
+.enter-row{margin-top:5vh;}
+
+@media(max-width:760px){
+  .church-scene{justify-content:center;text-align:center;padding-left:0;}
+  .church-copy{max-width:none;z-index:4;}
+  .enter-row{margin-top:3vh;}
+  .church-stage{height:auto;width:120vw;right:-10vw;opacity:.28;}
+  .church-scene.revealed .church-stage{opacity:.28;}
+}
+
+/* 窓の灯り（ゆっくり点る） */
+.window-glow{transform-origin:center;opacity:0;animation:windowLight 3s ease-in-out forwards;}
+@keyframes windowLight{0%{opacity:0;}60%{opacity:0;}100%{opacity:1;}}
+
+/* 店の扉（クリックで開く） */
+.shop-door{pointer-events:auto;cursor:pointer;}
+body.has-moon .shop-door{cursor:none;}
+.door-left,.door-right{transition:transform 2.2s var(--ease-slow);transform-box:fill-box;}
+.door-left{transform-origin:left center;} .door-right{transform-origin:right center;}
+body.opening .door-left{transform:perspective(420px) rotateY(78deg);}
+body.opening .door-right{transform:perspective(420px) rotateY(-78deg);}
+.door-glow{opacity:0;transition:opacity 2s ease;}
+body.opening .door-glow{opacity:1;}
+.door-handle{transition:filter .5s;}
+.shop-door:hover .door-handle{fill:#ffd98a;filter:drop-shadow(0 0 6px rgba(255,217,138,.9));}
+.shop-door:hover .door-left,.shop-door:hover .door-right{filter:brightness(1.25);}
+
+.enter-btn{
+  margin-top:0;font-family:var(--font-logo);letter-spacing:.28em;font-size:clamp(15px,1.8vw,19px);
+  color:var(--gold-light);background:transparent;border:1px solid var(--gold);
+  padding:16px 46px;border-radius:2px;position:relative;overflow:hidden;
+  transition:color .5s,box-shadow .6s,border-color .5s;
+}
+.enter-btn::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(circle at center,rgba(216,185,130,.35),transparent 70%);opacity:0;transition:opacity .6s;}
+.enter-btn:hover{color:var(--midnight);border-color:var(--gold-light);
+  box-shadow:0 0 28px rgba(176,141,87,.65),inset 0 0 40px rgba(216,185,130,.35);}
+.enter-btn:hover::before{opacity:1;}
+.enter-btn:active{box-shadow:0 0 44px rgba(216,185,130,.9),inset 0 0 60px rgba(216,185,130,.6);}
+.enter-caption{margin-top:18px;font-family:var(--font-title);font-style:italic;color:var(--gold-light);
+  opacity:.9;font-size:clamp(13px,1.5vw,16px);max-width:440px;letter-spacing:.04em;}
+.enter-caption span{display:block;font-style:normal;font-family:var(--font-body);color:var(--ivory);
+  opacity:.6;font-size:12px;margin-top:6px;letter-spacing:.1em;}
+
+/* Entrer後：開いた扉からアイボリーの光があふれて画面を満たす */
+#threshold{position:fixed;inset:0;z-index:900;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 60% 52%,var(--ivory) 0%,var(--ivory) 34%,rgba(237,228,202,.85) 55%,rgba(237,228,202,0) 78%);
+  transform:scale(.2);transform-origin:60% 52%;
+  transition:opacity 1.3s ease .8s,transform 1.9s var(--ease-slow) .8s;}
+body.opening #threshold{opacity:1;transform:scale(3.2);}
+@media(max-width:760px){#threshold{background:radial-gradient(circle at 50% 80%,var(--ivory) 0%,var(--ivory) 34%,rgba(237,228,202,.85) 55%,rgba(237,228,202,0) 78%);transform-origin:50% 80%;}}
+
+/* ============================================================
+   ③ 店内（絵本本体）：ナビ＋ページ
+   ============================================================ */
+#book{position:relative;z-index:5;display:none;background:var(--ivory);color:var(--midnight);min-height:100vh;}
+body.entered #cover{display:none;}
+body.entered #book{display:block;animation:fadeIn 1.6s ease .3s both;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+body.entered #sky{opacity:0;}
+
+nav{position:sticky;top:0;z-index:20;background:rgba(237,228,202,.9);backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(176,141,87,.35);}
+.nav-inner{max-width:1080px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.nav-logo{font-family:var(--font-logo);letter-spacing:.16em;color:var(--bordeaux);font-size:clamp(15px,2vw,20px);display:flex;align-items:center;}
+.nav-logo-img{height:40px;width:auto;display:none;}
+.nav-logo.has-img .nav-logo-img{display:block;}
+.nav-logo.has-img .nav-logo-text{display:none;}
+.nav-links{display:flex;gap:26px;flex-wrap:wrap;align-items:center;}
+.nav-links a{font-family:var(--font-title);font-size:16px;letter-spacing:.06em;color:var(--midnight);
+  position:relative;padding:4px 0;transition:color .4s;}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;width:0;height:1px;background:var(--gold);transition:width .4s var(--ease-slow);}
+.nav-links a:hover,.nav-links a.active{color:var(--bordeaux);}
+.nav-links a:hover::after,.nav-links a.active::after{width:100%;}
+@media(max-width:720px){.nav-inner{flex-direction:column;gap:10px;}.nav-links{gap:16px;justify-content:center;}}
+
+.page{max-width:1080px;margin:0 auto;padding:88px 24px 120px;display:none;}
+.page.active{display:block;animation:pageTurn 1.1s var(--ease-slow) both;}
+@keyframes pageTurn{0%{opacity:0;transform:rotateY(14deg) translateX(40px);transform-origin:left center;}
+  100%{opacity:1;transform:none;}}
+
+.page-head{text-align:center;margin-bottom:64px;}
+.page-head .fr{font-family:var(--font-logo);letter-spacing:.24em;color:var(--gold);font-size:13px;}
+.page-head h2{font-family:var(--font-title);color:var(--bordeaux);font-size:clamp(30px,5vw,52px);
+  font-weight:500;margin-top:8px;letter-spacing:.03em;}
+.page-head p{font-family:var(--font-body);color:#5c5346;margin-top:14px;font-size:15px;}
+
+/* ─ Online store（商品一覧） ─ */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:56px 40px;}
+.item{cursor:pointer;text-align:center;}
+body.has-moon .item{cursor:none;}
+.item .frame{aspect-ratio:4/5;border-radius:2px;overflow:hidden;position:relative;
+  background:linear-gradient(160deg,#1a2740,#0d1626);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 14px 40px rgba(71,8,30,.14);transition:transform .8s var(--ease-slow),box-shadow .8s;}
+.item:hover .frame{transform:translateY(-8px);box-shadow:0 26px 60px rgba(71,8,30,.24);}
+.item .frame .mark{font-family:var(--font-logo);color:var(--gold-light);letter-spacing:.2em;font-size:14px;opacity:.7;}
+.item .frame::after{content:"✦";position:absolute;color:rgba(216,185,130,.35);font-size:34px;}
+.item h3{font-family:var(--font-title);font-size:24px;color:var(--midnight);margin-top:22px;letter-spacing:.04em;}
+.item .fr-name{font-family:var(--font-logo);font-size:12px;letter-spacing:.2em;color:var(--gold);margin-top:4px;}
+.item .price{font-family:var(--font-title);color:var(--bordeaux);margin-top:8px;font-size:18px;}
+
+/* ─ 商品詳細 ─ */
+#page-detail .detail{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;}
+@media(max-width:800px){#page-detail .detail{grid-template-columns:1fr;gap:36px;}}
+.detail .photo{aspect-ratio:4/5;border-radius:2px;background:linear-gradient(160deg,#1a2740,#0d1626);
+  display:flex;align-items:center;justify-content:center;color:var(--gold-light);
+  font-family:var(--font-logo);letter-spacing:.2em;font-size:13px;box-shadow:0 20px 50px rgba(71,8,30,.18);}
+.detail h2{font-family:var(--font-title);color:var(--bordeaux);font-size:clamp(28px,4vw,44px);font-weight:500;}
+.detail .fr{font-family:var(--font-logo);color:var(--gold);letter-spacing:.2em;font-size:13px;margin-bottom:8px;}
+.detail .lead{font-family:var(--font-body);color:#4a4238;margin:18px 0 26px;font-size:15px;}
+.spec{border-top:1px solid rgba(176,141,87,.4);}
+.spec div{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid rgba(176,141,87,.25);font-size:14px;}
+.spec div span:first-child{width:96px;color:var(--gold);font-family:var(--font-title);flex-shrink:0;}
+.detail .price-big{font-family:var(--font-title);color:var(--bordeaux);font-size:30px;margin:26px 0 22px;}
+.back-link{display:inline-block;margin-top:40px;font-family:var(--font-title);font-style:italic;color:var(--gold);}
+.back-link:hover{color:var(--bordeaux);}
+
+/* 金ボタン（購入・送信など） */
+.gold-btn{font-family:var(--font-logo);letter-spacing:.18em;font-size:15px;color:var(--ivory);
+  background:linear-gradient(135deg,var(--gold),#8f6f3f);border:none;padding:15px 44px;border-radius:2px;
+  position:relative;overflow:hidden;transition:box-shadow .5s,transform .3s;}
+body.has-moon .gold-btn{cursor:none;}
+.gold-btn:hover{box-shadow:0 0 30px rgba(176,141,87,.7);transform:translateY(-2px);}
+.gold-btn:active{box-shadow:0 0 50px rgba(216,185,130,1),inset 0 0 30px rgba(255,240,210,.6);}
+
+/* ─ Access ─ */
+.access-table{max-width:600px;margin:0 auto;width:100%;border-collapse:collapse;}
+.access-table th,.access-table td{text-align:left;padding:18px 12px;border-bottom:1px solid rgba(176,141,87,.3);vertical-align:top;font-size:15px;}
+.access-table th{width:150px;color:var(--gold);font-family:var(--font-title);font-weight:500;white-space:nowrap;}
+
+/* ─ Arômélancolie（物語） ─ */
+.story{max-width:640px;margin:0 auto;text-align:center;}
+.story p{font-size:clamp(16px,2.2vw,19px);color:#3f382f;margin-bottom:1.6em;line-height:2.4;}
+.story .accent{font-family:var(--font-title);font-style:italic;color:var(--bordeaux);font-size:clamp(20px,3vw,26px);}
+.story-links{margin-top:50px;display:flex;gap:24px;justify-content:center;}
+.story-links a{font-family:var(--font-logo);letter-spacing:.16em;color:var(--gold);border:1px solid var(--gold);
+  padding:12px 30px;border-radius:2px;transition:all .5s;font-size:14px;}
+.story-links a:hover{background:var(--gold);color:var(--ivory);box-shadow:0 0 24px rgba(176,141,87,.5);}
+
+/* ─ Contact ─ */
+form.contact{max-width:600px;margin:0 auto;}
+.field{margin-bottom:26px;}
+.field label{display:block;font-family:var(--font-title);color:var(--bordeaux);margin-bottom:8px;font-size:16px;letter-spacing:.04em;}
+.field .req{color:var(--gold);font-size:12px;font-family:var(--font-body);}
+.field input,.field textarea{width:100%;padding:14px 16px;border:1px solid rgba(176,141,87,.5);
+  border-radius:2px;background:rgba(255,255,255,.5);font-family:var(--font-body);font-size:15px;color:var(--midnight);}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(176,141,87,.2);}
+.field .note{font-size:13px;color:#7a6f5f;margin-top:6px;}
+form.contact .gold-btn{width:100%;margin-top:8px;}
+
+/* ============================================================
+   フッター
+   ============================================================ */
+footer{background:var(--midnight);color:var(--ivory);text-align:center;padding:60px 24px 44px;}
+footer .f-links{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:13px;font-family:var(--font-title);margin-bottom:24px;}
+footer .f-links a{color:var(--ivory);opacity:.8;transition:color .4s;}
+footer .f-links a:hover{color:var(--gold-light);opacity:1;}
+footer .f-copy{font-family:var(--font-logo);letter-spacing:.16em;color:var(--gold-light);font-size:13px;margin-bottom:14px;}
+footer .f-bye{font-family:var(--font-title);font-style:italic;color:var(--ivory);opacity:.85;font-size:16px;}
+footer .f-bye small{display:block;opacity:.6;font-style:normal;font-family:var(--font-body);font-size:12px;margin-top:6px;}
+
+/* ============================================================
+   音トグル・カスタムカーソル
+   ============================================================ */
+#sound-toggle{position:fixed;top:20px;right:22px;z-index:950;width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(176,141,87,.6);background:rgba(16,26,43,.5);backdrop-filter:blur(4px);
+  color:var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .4s;}
+body.has-moon #sound-toggle{cursor:none;}
+#sound-toggle:hover{box-shadow:0 0 20px rgba(176,141,87,.6);}
+body.entered #sound-toggle{border-color:rgba(176,141,87,.8);background:rgba(237,228,202,.6);color:var(--bordeaux);}
+
+.cursor-moon,.cursor-glow{position:fixed;top:0;left:0;pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);will-change:transform;}
+/* 小さな金色の星（#B08D57） */
+.cursor-moon{width:16px;height:16px;background:var(--gold);
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  filter:drop-shadow(0 0 6px rgba(176,141,87,.9));transition:width .3s,height .3s;}
+.cursor-glow{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,rgba(176,141,87,.30),transparent 70%);}
+body.moon-hover .cursor-moon{width:24px;height:24px;}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001s !important;transition-duration:.15s !important;}
+  .cloud,.star{animation:none !important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ① ローディング：ヨーロッパの洋書が開く -->
+<div id="loader">
+  <div class="book2">
+    <!-- 2ページ目（開いたときに見える面）＝ロゴ。押すと夜空トップへ -->
+    <div class="pages">
+      <div class="page-shade"></div>
+      <div class="page-inner" id="book-logo" role="button" tabindex="0" aria-label="トップページへ入る">
+        <div class="pl-star"></div>
+        <div class="pl-title">Pâtisserie<br>Arômélancolie</div>
+        <div class="pl-hint">— entrez dans la nuit —<span>ロゴをそっと押して、夜へ</span></div>
+      </div>
+    </div>
+    <!-- めくれる扉ページ -->
+    <div class="leaf"></div>
+    <!-- 表紙：この本の画像（assets/book-cover.png）。無ければ革表紙にフォールバック -->
+    <div class="front-cover">
+      <div class="face front">
+        <img class="cover-photo" src="assets/book-cover.png" alt="Arômélancolie"
+             onload="this.closest('.book2').classList.add('has-cover')" onerror="this.remove()">
+        <!-- ▼ 画像が無いときのフォールバック（革表紙） ▼ -->
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+        <div class="cover-emblem"><div class="cover-star"></div></div>
+        <div class="cover-title">PÂTISSERIE<br>ARÔMÉLANCOLIE</div>
+        <div class="cover-sub">— un conte de la nuit —</div>
+      </div>
+      <div class="face back"></div>
+    </div>
+    <!-- 綴じ・金の小口 -->
+    <div class="spine2"></div>
+    <div class="edge-fore"></div>
+    <div class="edge-bottom"></div>
+  </div>
+</div>
+
+<!-- 夜空の固定背景（星と雲だけ・月なし） -->
+<div id="sky" aria-hidden="true"></div>
+
+<!-- 音トグル -->
+<button id="sound-toggle" title="音のオン／オフ" aria-label="音のオン／オフ">♪</button>
+
+<!-- 扉が開くときのアイボリーの光 -->
+<div id="threshold" aria-hidden="true"></div>
+
+<!-- ② 表紙 -->
+<div id="cover">
+  <!-- Scene 1：開いた瞬間は「夜空のみ」。金の歓迎文がふわりと浮かぶ -->
+  <section class="scene intro-scene" id="intro">
+    <div class="intro-copy">
+      <p class="welcome-fr">Bienvenue à la</p>
+      <h1 class="welcome-logo">Pâtisserie<br>Arômélancolie</h1>
+    </div>
+    <p class="scroll-hint">scroll ‹ そっと下へ ›</p>
+  </section>
+
+  <!-- Scene 2：スクロールすると、お店（完成画像）がふわりと現れる → Entrer -->
+  <section class="scene photo-scene" id="church">
+    <img class="photo-reveal" src="assets/top-hero.jpg"
+         alt="Pâtisserie Arômélancolie — 眠れない夜に現れる幻のパティスリー">
+    <!-- 大聖堂の扉の位置（クリックで入店） -->
+    <button class="door-hotspot" id="shop-door" aria-label="扉を開けて店内へ入る"></button>
+    <!-- Entrer（入店） -->
+    <div class="enter-row">
+      <button class="enter-btn" id="enter">Entrer</button>
+      <p class="enter-caption">— 扉を開けて、店内へ —</p>
+    </div>
+    <!-- （旧・未使用のSVGは非表示で保持） -->
+    <div class="legacy-hidden" style="display:none" aria-hidden="true">
+      <svg class="shop-svg" style="display:none" viewBox="0 0 900 740" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="glassGlow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f6e3b4"/><stop offset=".55" stop-color="#e8c98c"/><stop offset="1" stop-color="#c99e5c"/>
+          </linearGradient>
+          <radialGradient id="roseGlow" cx=".5" cy=".5" r=".5">
+            <stop offset="0" stop-color="#f8ecd0"/><stop offset=".6" stop-color="#e9c887"/><stop offset="1" stop-color="#b98f4e"/>
+          </radialGradient>
+          <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#182338"/><stop offset="1" stop-color="#0d1626"/>
+          </linearGradient>
+        </defs>
+
+        <!-- 石畳 -->
+        <rect x="0" y="668" width="900" height="72" fill="#0a1322"/>
+        <g stroke="#16243a" stroke-width="1.5" fill="none" opacity=".7">
+          <ellipse cx="90" cy="692" rx="30" ry="7"/><ellipse cx="180" cy="706" rx="34" ry="8"/>
+          <ellipse cx="300" cy="690" rx="28" ry="7"/><ellipse cx="420" cy="708" rx="34" ry="8"/>
+          <ellipse cx="545" cy="692" rx="30" ry="7"/><ellipse cx="668" cy="706" rx="34" ry="8"/>
+          <ellipse cx="790" cy="690" rx="28" ry="7"/><ellipse cx="360" cy="676" rx="24" ry="5"/>
+          <ellipse cx="620" cy="676" rx="24" ry="5"/>
+        </g>
+
+        <!-- 建物 -->
+        <rect x="270" y="300" width="580" height="370" fill="url(#stone)"/>
+        <g stroke="#0b1424" stroke-width="1" opacity=".45">
+          <line x1="270" y1="345" x2="850" y2="345"/><line x1="270" y1="385" x2="850" y2="385"/>
+          <line x1="400" y1="300" x2="400" y2="410"/><line x1="720" y1="300" x2="720" y2="410"/>
+        </g>
+        <!-- 切妻（ゴシックの破風） -->
+        <polygon points="250,302 560,66 870,302" fill="#131e30"/>
+        <polyline points="244,306 560,60 876,306" fill="none" stroke="#1d2a40" stroke-width="8" stroke-linecap="round"/>
+        <!-- 頂上の十字架 -->
+        <g stroke="#2a3c5c" stroke-width="5" stroke-linecap="round">
+          <line x1="560" y1="16" x2="560" y2="52"/><line x1="547" y1="28" x2="573" y2="28"/>
+        </g>
+        <!-- 左の小尖塔 -->
+        <rect x="300" y="172" width="72" height="138" fill="#111b2d"/>
+        <polygon points="292,176 336,64 380,176" fill="#16223a"/>
+        <g stroke="#2a3c5c" stroke-width="4" stroke-linecap="round">
+          <line x1="336" y1="30" x2="336" y2="56"/><line x1="327" y1="39" x2="345" y2="39"/>
+        </g>
+        <path class="window-glow" style="animation-delay:.9s" d="M321 252 v-32 a15 15 0 0 1 30 0 v32 z" fill="#dcae62"/>
+
+        <!-- バラ窓 -->
+        <g class="window-glow">
+          <circle cx="560" cy="212" r="80" fill="#e9c887" opacity=".14"/>
+          <circle cx="560" cy="212" r="66" fill="url(#roseGlow)"/>
+          <g fill="none" stroke="#101a2b" stroke-width="4">
+            <circle cx="560" cy="212" r="66"/><circle cx="560" cy="212" r="18"/>
+            <circle cx="560" cy="168" r="17"/><circle cx="560" cy="256" r="17"/>
+            <circle cx="516" cy="212" r="17"/><circle cx="604" cy="212" r="17"/>
+            <circle cx="529" cy="181" r="17"/><circle cx="591" cy="181" r="17"/>
+            <circle cx="529" cy="243" r="17"/><circle cx="591" cy="243" r="17"/>
+          </g>
+        </g>
+
+        <!-- 尖頭アーチの窓（左右・ステンドグラス風） -->
+        <g class="window-glow" style="animation-delay:.4s">
+          <path d="M430 405 v-52 a22 22 0 0 1 44 0 v52 z" fill="#d8ac63"/>
+          <path d="M646 405 v-52 a22 22 0 0 1 44 0 v52 z" fill="#d8ac63"/>
+          <g stroke="#101a2b" stroke-width="3" fill="none">
+            <path d="M430 405 v-52 a22 22 0 0 1 44 0 v52"/><line x1="452" y1="331" x2="452" y2="405"/>
+            <path d="M646 405 v-52 a22 22 0 0 1 44 0 v52"/><line x1="668" y1="331" x2="668" y2="405"/>
+          </g>
+        </g>
+
+        <!-- 蔦と小さな花（左右の壁） -->
+        <g fill="#1e3348">
+          <circle cx="285" cy="420" r="9"/><circle cx="296" cy="440" r="7"/><circle cx="282" cy="460" r="8"/>
+          <circle cx="838" cy="420" r="9"/><circle cx="828" cy="444" r="7"/><circle cx="840" cy="466" r="8"/>
+          <circle cx="620" cy="300" r="8"/><circle cx="640" cy="312" r="6"/><circle cx="480" cy="304" r="7"/>
+        </g>
+        <g fill="#7e4a5e" opacity=".85">
+          <circle cx="290" cy="430" r="3.4"/><circle cx="286" cy="452" r="3"/>
+          <circle cx="834" cy="432" r="3.4"/><circle cx="836" cy="456" r="3"/>
+          <circle cx="630" cy="306" r="3"/><circle cx="486" cy="310" r="2.6"/>
+        </g>
+
+        <!-- オーニング（日除け）＋店名 -->
+        <path d="M292 412 h536 l24 56 h-584 z" fill="#0d1526"/>
+        <g stroke="#141f33" stroke-width="13" opacity=".55">
+          <line x1="350" y1="414" x2="342" y2="466"/><line x1="440" y1="414" x2="434" y2="466"/>
+          <line x1="530" y1="414" x2="526" y2="466"/><line x1="620" y1="414" x2="616" y2="466"/>
+          <line x1="710" y1="414" x2="706" y2="466"/><line x1="795" y1="414" x2="791" y2="466"/>
+        </g>
+        <path d="M292 412 h536 l24 56 h-584 z" fill="none" stroke="#B08D57" stroke-width="1.6" opacity=".7"/>
+        <path d="M268 468 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 a14.6 11 0 0 0 29.2 0 Z"
+              fill="#0d1526" stroke="#B08D57" stroke-width="1.4" opacity=".95"/>
+        <text x="560" y="436" text-anchor="middle" font-size="14" letter-spacing="7" fill="#cfa96e" style="font-family:'Cinzel',serif;">PÂTISSERIE</text>
+        <text x="560" y="462" text-anchor="middle" font-size="27" fill="#e7cf9b" style="font-family:'Cormorant Garamond',serif;">Arômélancolie</text>
+
+        <!-- ショーウィンドウ（鉄枠＋暖かい光） -->
+        <rect x="285" y="468" width="550" height="200" fill="#0a1120"/>
+        <rect x="300" y="484" width="190" height="170" fill="url(#glassGlow)"/>
+        <rect x="630" y="484" width="190" height="170" fill="url(#glassGlow)"/>
+        <!-- 扉上のアーチ窓（トランサム） -->
+        <path d="M506 484 h108 v54 a54 54 0 0 0 -108 0 z" fill="url(#glassGlow)"/>
+        <g stroke="#0a1120" stroke-width="3" fill="none" opacity=".9">
+          <line x1="395" y1="484" x2="395" y2="654"/><line x1="725" y1="484" x2="725" y2="654"/>
+          <path d="M506 538 a54 54 0 0 1 108 0"/>
+        </g>
+
+        <!-- 左窓：棚の菓子瓶とショーケース -->
+        <g stroke="#8a6431" stroke-width="3" opacity=".85">
+          <line x1="306" y1="530" x2="484" y2="530"/><line x1="306" y1="568" x2="484" y2="568"/>
+        </g>
+        <g fill="#6b4a26">
+          <rect x="318" y="512" width="11" height="17" rx="2"/><rect x="338" y="508" width="9" height="21" rx="2"/>
+          <circle cx="366" cy="521" r="8"/><rect x="384" y="510" width="11" height="19" rx="2"/>
+          <circle cx="416" cy="522" r="7"/><rect x="432" y="512" width="10" height="17" rx="2"/>
+          <rect x="456" y="508" width="9" height="21" rx="2"/>
+          <rect x="316" y="550" width="10" height="17" rx="2"/><circle cx="344" cy="560" r="7"/>
+          <rect x="362" y="548" width="11" height="19" rx="2"/><circle cx="394" cy="559" r="8"/>
+          <rect x="412" y="551" width="9" height="16" rx="2"/><circle cx="440" cy="560" r="7"/>
+          <rect x="458" y="549" width="10" height="18" rx="2"/>
+        </g>
+        <!-- ショーケース（ガラスの中にお菓子） -->
+        <rect x="314" y="606" width="160" height="48" rx="8" fill="#f4e3bd" stroke="#7a5a2e" stroke-width="3"/>
+        <g fill="#9c6a30">
+          <circle cx="334" cy="636" r="5"/><circle cx="356" cy="636" r="5"/><circle cx="378" cy="636" r="5"/>
+          <circle cx="400" cy="636" r="5"/><circle cx="422" cy="636" r="5"/><circle cx="446" cy="636" r="5"/>
+        </g>
+        <g fill="#8e3d3d">
+          <circle cx="345" cy="620" r="4.4"/><circle cx="379" cy="620" r="4.4"/><circle cx="413" cy="620" r="4.4"/><circle cx="447" cy="620" r="4.4"/>
+        </g>
+
+        <!-- 右窓：シャンデリアと菓子瓶の棚 -->
+        <g stroke="#3d2c12" stroke-width="3" fill="none">
+          <line x1="725" y1="484" x2="725" y2="502"/>
+          <path d="M695 514 q30 20 60 0"/>
+          <line x1="695" y1="514" x2="695" y2="508"/><line x1="755" y1="514" x2="755" y2="508"/>
+        </g>
+        <circle cx="725" cy="512" r="26" fill="#ffd98a" opacity=".18"/>
+        <g fill="#ffd98a">
+          <circle cx="695" cy="505" r="3.6"/><circle cx="725" cy="500" r="3.6"/><circle cx="755" cy="505" r="3.6"/>
+        </g>
+        <g stroke="#8a6431" stroke-width="3" opacity=".85">
+          <line x1="636" y1="556" x2="814" y2="556"/><line x1="636" y1="596" x2="814" y2="596"/>
+        </g>
+        <g fill="#6b4a26">
+          <rect x="646" y="538" width="10" height="17" rx="2"/><circle cx="676" cy="547" r="7"/>
+          <rect x="694" y="536" width="11" height="19" rx="2"/><circle cx="726" cy="548" r="8"/>
+          <rect x="744" y="538" width="9" height="17" rx="2"/><circle cx="772" cy="547" r="7"/>
+          <rect x="790" y="536" width="10" height="19" rx="2"/>
+          <circle cx="656" cy="586" r="7"/><rect x="674" y="578" width="10" height="17" rx="2"/>
+          <circle cx="704" cy="587" r="8"/><rect x="724" y="576" width="11" height="19" rx="2"/>
+          <circle cx="756" cy="586" r="7"/><rect x="774" y="578" width="10" height="17" rx="2"/>
+          <rect x="796" y="580" width="9" height="15" rx="2"/>
+        </g>
+        <!-- 右窓の下段：ホールケーキ -->
+        <g>
+          <ellipse cx="690" cy="640" rx="26" ry="8" fill="#e8d3a4"/>
+          <rect x="664" y="622" width="52" height="18" rx="4" fill="#f0e0b8"/>
+          <circle cx="690" cy="618" r="4" fill="#8e3d3d"/>
+          <ellipse cx="770" cy="642" rx="22" ry="7" fill="#e8d3a4"/>
+          <rect x="748" y="628" width="44" height="14" rx="4" fill="#d9b98a"/>
+        </g>
+
+        <!-- ▼ 扉（クリックで開いて店内へ） ▼ -->
+        <g class="shop-door" id="shop-door-old" aria-hidden="true">
+          <!-- 扉の奥のあたたかい光 -->
+          <path class="door-glow" d="M508 664 V538 a52 52 0 0 1 104 0 V664 Z" fill="#f2e2bf"/>
+          <!-- 両開きの扉 -->
+          <g class="door-left">
+            <path d="M508 664 V538 A52 52 0 0 1 560 486 V664 Z" fill="#1c1108"/>
+            <line x1="524" y1="520" x2="524" y2="652" stroke="#0d0803" stroke-width="3"/>
+            <line x1="544" y1="500" x2="544" y2="652" stroke="#0d0803" stroke-width="3"/>
+            <circle class="door-handle" cx="549" cy="596" r="3.2" fill="#B08D57"/>
+          </g>
+          <g class="door-right">
+            <path d="M612 664 V538 A52 52 0 0 0 560 486 V664 Z" fill="#150c05"/>
+            <line x1="596" y1="520" x2="596" y2="652" stroke="#0a0602" stroke-width="3"/>
+            <line x1="576" y1="500" x2="576" y2="652" stroke="#0a0602" stroke-width="3"/>
+            <circle class="door-handle" cx="571" cy="596" r="3.2" fill="#B08D57"/>
+          </g>
+        </g>
+
+        <!-- 街灯（左）とランタン（右壁） -->
+        <line x1="222" y1="668" x2="222" y2="424" stroke="#0e1728" stroke-width="8"/>
+        <polygon points="200,382 244,382 222,362" fill="#0e1728"/>
+        <rect x="204" y="382" width="36" height="46" rx="4" fill="#0e1728"/>
+        <rect class="window-glow" style="animation-delay:1.1s" x="210" y="388" width="24" height="34" rx="3" fill="#e8c169"/>
+        <circle cx="222" cy="405" r="34" fill="#e8c169" opacity=".1"/>
+        <line x1="844" y1="472" x2="868" y2="472" stroke="#0e1728" stroke-width="5"/>
+        <rect x="858" y="472" width="28" height="38" rx="3" fill="#0e1728"/>
+        <rect class="window-glow" style="animation-delay:1.3s" x="863" y="477" width="18" height="28" rx="2" fill="#e8c169"/>
+        <circle cx="872" cy="491" r="24" fill="#e8c169" opacity=".1"/>
+
+        <!-- 黒板の立て看板 -->
+        <g>
+          <rect x="352" y="556" width="106" height="118" rx="6" fill="#0c1526" stroke="#B08D57" stroke-width="2"/>
+          <rect x="360" y="564" width="90" height="102" rx="4" fill="#0f1a2e"/>
+          <g fill="#cbb27a" text-anchor="middle" style="font-family:'Cormorant Garamond',serif;font-style:italic;">
+            <text x="405" y="592" font-size="12">Pour les âmes</text>
+            <text x="405" y="610" font-size="11">qui ne dorment pas,</text>
+            <text x="405" y="630" font-size="12">un doux rêve</text>
+            <text x="405" y="648" font-size="12">sucré…</text>
+          </g>
+        </g>
+
+        <!-- カフェテーブル（左・クローシュとキャンドル） -->
+        <g fill="#0c1526">
+          <ellipse cx="120" cy="638" rx="56" ry="10"/>
+          <rect x="116" y="640" width="8" height="30"/>
+          <ellipse cx="120" cy="671" rx="26" ry="5"/>
+        </g>
+        <path d="M92 630 a26 22 0 0 1 52 0 z" fill="#16233a"/>
+        <circle cx="118" cy="606" r="3" fill="#B08D57"/>
+        <rect x="158" y="616" width="7" height="15" fill="#d8cdb2"/>
+        <circle class="window-glow" style="animation-delay:1.5s" cx="161.5" cy="610" r="4.4" fill="#ffd98a"/>
+        <circle cx="161.5" cy="610" r="12" fill="#ffd98a" opacity=".14"/>
+
+        <!-- 薔薇の茂み（左右の足元） -->
+        <g>
+          <circle cx="266" cy="646" r="16" fill="#152c40"/><circle cx="286" cy="656" r="13" fill="#183349"/>
+          <circle cx="250" cy="658" r="12" fill="#122738"/>
+          <circle cx="262" cy="642" r="6" fill="#a86279"/><circle cx="282" cy="650" r="5" fill="#8e4a63"/>
+          <circle cx="252" cy="652" r="5.4" fill="#c08ba0"/><circle cx="272" cy="660" r="4.6" fill="#8e4a63"/>
+        </g>
+        <g>
+          <circle cx="812" cy="636" r="20" fill="#152c40"/><circle cx="844" cy="648" r="17" fill="#183349"/>
+          <circle cx="782" cy="652" r="14" fill="#122738"/><circle cx="866" cy="632" r="13" fill="#152c40"/>
+          <circle cx="806" cy="628" r="7.5" fill="#c08ba0"/><circle cx="830" cy="642" r="6.5" fill="#a86279"/>
+          <circle cx="852" cy="630" r="6" fill="#8e4a63"/><circle cx="788" cy="644" r="6" fill="#a86279"/>
+          <circle cx="868" cy="644" r="5.4" fill="#c08ba0"/><circle cx="818" cy="654" r="5" fill="#8e4a63"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+</div>
+
+<!-- ③ 店内（絵本本体） -->
+<div id="book">
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" id="home-logo" title="トップへ戻る"><img class="nav-logo-img" src="assets/logo.png" alt="Arômélancolie" onload="this.closest('.nav-logo').classList.add('has-img')" onerror="this.remove()"><span class="nav-logo-text">Arômélancolie</span></a>
+      <div class="nav-links">
+        <a data-page="store" class="active">Online store</a>
+        <a data-page="access">Access</a>
+        <a data-page="story">Arômélancolie</a>
+        <a data-page="contact">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Online store -->
+  <section class="page active" id="page-store">
+    <div class="page-head">
+      <p class="fr">LES PÂTISSERIES</p>
+      <h2>お菓子</h2>
+      <p>夜のためだけに焼き上げた、幻の菓子たち。</p>
+    </div>
+    <div class="grid" id="product-grid"><!-- JSで生成 --></div>
+  </section>
+
+  <!-- 商品詳細 -->
+  <section class="page" id="page-detail">
+    <!-- JSで生成 -->
+  </section>
+
+  <!-- Access -->
+  <section class="page" id="page-access">
+    <div class="page-head">
+      <p class="fr">ACCÈS</p>
+      <h2>Access</h2>
+      <p>夜にだけ、灯りをともします。</p>
+    </div>
+    <table class="access-table">
+      <tr><th>店名</th><td>Pâtisserie Arômélancolie</td></tr>
+      <tr><th>住所</th><td>〒000-0000　○○県○○市○○ 0-0-0<br><span style="font-size:13px;color:#7a6f5f;">※ 実際の住所に差し替えてください</span></td></tr>
+      <tr><th>営業時間</th><td>21:00 〜 翌 3:00<br><span style="font-size:13px;color:#7a6f5f;">（夜にだけ現れる幻のパティスリー）</span></td></tr>
+      <tr><th>定休日</th><td>満月の夜</td></tr>
+      <tr><th>電話番号</th><td>000-0000-0000</td></tr>
+    </table>
+  </section>
+
+  <!-- Arômélancolie（物語） -->
+  <section class="page" id="page-story">
+    <div class="page-head">
+      <p class="fr">NOTRE HISTOIRE</p>
+      <h2>Arômélancolie</h2>
+    </div>
+    <div class="story">
+      <p class="accent">Bienvenue.</p>
+      <p>眠れない夜へ、ようこそ。</p>
+      <p>ここは、夜にだけ現れる<br>幻のパティスリー。</p>
+      <p>お菓子は、誰かを幸せにするだけではなく、<br>眠れない夜に寄り添うものだと、<br>私たちは信じています。</p>
+      <div class="story-links">
+        <a href="#" target="_blank" rel="noopener">note</a>
+        <a href="#" target="_blank" rel="noopener">Instagram</a>
+      </div>
+      <p style="font-size:13px;color:#7a6f5f;margin-top:24px;">※ note・Instagram のURLを差し替えてください</p>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section class="page" id="page-contact">
+    <div class="page-head">
+      <p class="fr">CONTACT</p>
+      <h2>Contact</h2>
+      <p>夜のあいだに、お便りを。</p>
+    </div>
+    <form class="contact" onsubmit="return false;">
+      <div class="field">
+        <label>件名 <span class="req">必須</span></label>
+        <input type="text" name="subject" required>
+      </div>
+      <div class="field">
+        <label>用件 <span class="req">必須</span></label>
+        <textarea name="message" rows="6" required></textarea>
+      </div>
+      <div class="field">
+        <label>返信用アドレス</label>
+        <input type="email" name="email" placeholder="返事が欲しい場合のみ">
+        <p class="note">こちらから返事をご希望の場合は、ご入力ください。</p>
+      </div>
+      <button type="submit" class="gold-btn">送る</button>
+      <p class="note" style="text-align:center;margin-top:16px;">※ 送信を実際に届くようにするには、後で送信先の設定が必要です。</p>
+    </form>
+  </section>
+
+  <footer>
+    <div class="f-links">
+      <a href="#">利用規約</a><span style="opacity:.4">｜</span>
+      <a href="#">プライバシーポリシー</a><span style="opacity:.4">｜</span>
+      <a href="#">特定商取引法に基づく表記</a>
+    </div>
+    <p class="f-copy">© Pâtisserie Arômélancolie</p>
+    <p class="f-bye">À bientôt, lorsque la nuit reviendra.
+      <small>また夜になったら、お会いしましょう。</small>
+    </p>
+  </footer>
+</div>
+
+<!-- カスタムカーソル（月） -->
+<div class="cursor-glow"></div>
+<div class="cursor-moon"></div>
+
+<script>
+/* ============================================================
+   商品データ（ここを編集すれば商品が変わります）
+   ============================================================ */
+const PRODUCTS = [
+  { fr:"Nuit Blanche", ja:"眠れない夜に", price:"¥620",
+    lead:"白い夜。ふわりと軽いムースの奥に、蜂蜜のかすかな苦み。",
+    ingredients:"生クリーム、卵、砂糖、蜂蜜、ゼラチン、バニラ",
+    allergy:"卵・乳", keep:"要冷蔵・当日中" },
+  { fr:"Minuit", ja:"真夜中", price:"¥680",
+    lead:"深い夜のようなショコラ。ほろ苦さの底に、ひとさじの安らぎ。",
+    ingredients:"クーベルチュールチョコレート、生クリーム、卵、バター、砂糖",
+    allergy:"卵・乳・大豆", keep:"要冷蔵・翌日まで" },
+  { fr:"Étoile", ja:"星の欠片", price:"¥580",
+    lead:"星屑のようにきらめく、レモンとピスタチオの小さな菓子。",
+    ingredients:"アーモンド、ピスタチオ、卵白、砂糖、レモン",
+    allergy:"卵・ナッツ", keep:"常温・3日以内" },
+  { fr:"Rêverie", ja:"まどろみ", price:"¥640",
+    lead:"とろけるようなカスタードと、ラム香るドライフルーツ。",
+    ingredients:"牛乳、卵、砂糖、小麦粉、レーズン、ラム酒",
+    allergy:"卵・乳・小麦", keep:"要冷蔵・翌日まで" },
+];
+
+/* 商品一覧を描画 */
+const grid = document.getElementById('product-grid');
+PRODUCTS.forEach((p,i)=>{
+  const el = document.createElement('div');
+  el.className = 'item'; el.dataset.i = i;
+  el.innerHTML = `
+    <div class="frame"><span class="mark">${p.fr}</span></div>
+    <h3>${p.ja}</h3>
+    <p class="fr-name">${p.fr}</p>
+    <p class="price">${p.price}</p>`;
+  el.addEventListener('click',()=>openDetail(i));
+  grid.appendChild(el);
+});
+
+/* 商品詳細を描画・表示 */
+function openDetail(i){
+  const p = PRODUCTS[i];
+  const page = document.getElementById('page-detail');
+  page.innerHTML = `
+    <div class="detail">
+      <div class="photo">写真：${p.fr}</div>
+      <div>
+        <p class="fr">${p.fr}</p>
+        <h2>${p.ja}</h2>
+        <p class="lead">${p.lead}</p>
+        <div class="spec">
+          <div><span>原材料</span><span>${p.ingredients}</span></div>
+          <div><span>アレルギー</span><span>${p.allergy}</span></div>
+          <div><span>賞味期限</span><span>${p.keep}</span></div>
+        </div>
+        <p class="price-big">${p.price}</p>
+        <button class="gold-btn" onclick="alert('※ 購入機能は後で設定します（お支払い方法・在庫連携など）');">購入する</button>
+        <br><a class="back-link" onclick="showPage('store')">‹ お菓子の一覧へ戻る</a>
+      </div>
+    </div>`;
+  showPage('detail');
+}
+
+/* ============================================================
+   ページ切り替え（ナビ＝ページめくり）
+   ============================================================ */
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const target = document.getElementById('page-'+name);
+  if(target){ target.classList.add('active'); }
+  document.querySelectorAll('.nav-links a').forEach(a=>{
+    a.classList.toggle('active', a.dataset.page===name);
+  });
+  document.getElementById('book').scrollIntoView({behavior:'smooth',block:'start'});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-page]').forEach(a=>{
+  a.addEventListener('click',e=>{e.preventDefault();showPage(a.dataset.page);});
+});
+
+/* ロゴ（Arômélancolie）を押すとトップページ（表紙・夜空）へ戻る */
+function goHome(){
+  stopAmbient();
+  document.body.classList.remove('entered','opening');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-store').classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.toggle('active',a.dataset.page==='store'));
+  window.scrollTo(0,0);
+}
+document.getElementById('home-logo').addEventListener('click',e=>{e.preventDefault();goHome();});
+
+/* ============================================================
+   夜空：星・雲・流れ星
+   ============================================================ */
+const sky = document.getElementById('sky');
+// 原案どおり、星は数えるほど（明るい星3個＋ごく控えめな微光を2つ）
+const brightStars = [[18,22],[74,16],[52,30]];
+brightStars.forEach(([x,y])=>{
+  const s=document.createElement('div'); s.className='star big';
+  s.style.left=x+'vw'; s.style.top=y+'vh'; s.style.animationDelay=(x%3)+'s';
+  sky.appendChild(s);
+});
+[[33,12],[86,34]].forEach(([x,y],i)=>{
+  const s=document.createElement('div'); s.className='star';
+  s.style.left=x+'vw'; s.style.top=y+'vh'; s.style.width=s.style.height='1px';
+  s.style.opacity='.5'; s.style.animationDelay=(i*2)+'s';
+  sky.appendChild(s);
+});
+// 流れる雲（2つ・とてもゆっくり）
+[[10,120],[40,150]].forEach(([top,dur],k)=>{
+  const c=document.createElement('div'); c.className='cloud';
+  c.style.top=top+'vh'; c.style.width='40vw'; c.style.height='16vh';
+  c.style.animationDuration=dur+'s'; c.style.animationDelay=(-k*60)+'s';
+  sky.appendChild(c);
+});
+
+// Scene 2：スクロールで教会（大聖堂）がせり上がって現れる
+const churchScene=document.getElementById('church');
+if(churchScene){
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting) churchScene.classList.add('revealed'); });
+  },{threshold:.3});
+  io.observe(churchScene);
+}
+// スクロールで流れ星
+let lastScroll=0;
+window.addEventListener('scroll',()=>{
+  if(document.body.classList.contains('entered')) return;
+  const now=Date.now();
+  if(now-lastScroll<900) return; lastScroll=now;
+  const star=document.createElement('div'); star.className='shooting';
+  const sx=20+Math.floor((now/97)%60);
+  star.style.left=sx+'vw'; star.style.top=(10+ (now%20))+'vh';
+  document.body.appendChild(star);
+  star.animate([
+    {opacity:0,transform:'translate(0,0)'},
+    {opacity:1,offset:.2},
+    {opacity:0,transform:'translate(120px,180px)'}
+  ],{duration:1400,easing:'ease-out'});
+  setTimeout(()=>star.remove(),1500);
+},{passive:true});
+
+/* ============================================================
+   音（Web Audioで合成：鐘・扉・環境音）
+   ============================================================ */
+let audioCtx=null, ambientNodes=null, soundOn=true, bellRung=false;
+function ensureCtx(){
+  if(!audioCtx){ try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+// 遠くの鐘（一度だけ）
+function playBell(){
+  const ctx=ensureCtx(); if(!ctx||!soundOn) return;
+  const t=ctx.currentTime;
+  [523.25,659.25,784.0,1046.5].forEach((f,i)=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=i===0?'sine':'triangle'; o.frequency.value=f;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.16/(i+1),t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+3.2+i*0.3);
+    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t+3.6+i*0.3);
+  });
+}
+// 木の扉がゆっくり開く音（フィルタしたノイズのスイープ）
+function playDoor(){
+  const ctx=ensureCtx(); if(!ctx||!soundOn) return;
+  const t=ctx.currentTime, dur=1.8;
+  const buf=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++){ d[i]=(Math.random()*2-1)*(1-i/d.length); }
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const f=ctx.createBiquadFilter(); f.type='lowpass';
+  f.frequency.setValueAtTime(220,t); f.frequency.linearRampToValueAtTime(90,t+dur);
+  const g=ctx.createGain(); g.gain.setValueAtTime(0.28,t); g.gain.linearRampToValueAtTime(0.001,t+dur);
+  src.connect(f).connect(g).connect(ctx.destination); src.start(t);
+}
+// キャンドル/暖炉のような静かな環境音（かすかなノイズ＋時々パチッ）
+function startAmbient(){
+  const ctx=ensureCtx(); if(!ctx||!soundOn||ambientNodes) return;
+  const buf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*0.5;
+  const src=ctx.createBufferSource(); src.buffer=buf; src.loop=true;
+  const f=ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=380;
+  const g=ctx.createGain(); g.gain.value=0.015;
+  src.connect(f).connect(g).connect(ctx.destination); src.start();
+  ambientNodes={src,g};
+}
+function stopAmbient(){ if(ambientNodes){ try{ambientNodes.src.stop();}catch(e){} ambientNodes=null; } }
+
+// 音トグル
+const soundBtn=document.getElementById('sound-toggle');
+soundBtn.addEventListener('click',()=>{
+  soundOn=!soundOn;
+  soundBtn.textContent=soundOn?'♪':'✕';
+  soundBtn.title=soundOn?'音：オン':'音：オフ';
+  if(soundOn){ ensureCtx(); if(document.body.classList.contains('entered')) startAmbient(); }
+  else{ stopAmbient(); }
+});
+// 最初の操作で鐘を一度鳴らす（ブラウザの自動再生制限への対応）
+function firstGesture(){
+  if(!bellRung && soundOn){ bellRung=true; ensureCtx(); setTimeout(playBell,120); }
+  window.removeEventListener('pointerdown',firstGesture);
+  window.removeEventListener('keydown',firstGesture);
+  window.removeEventListener('scroll',firstGesture);
+}
+window.addEventListener('pointerdown',firstGesture);
+window.addEventListener('keydown',firstGesture);
+window.addEventListener('scroll',firstGesture,{passive:true});
+
+/* ============================================================
+   Entrer／店の扉クリック → 扉が開く → 入店
+   ============================================================ */
+let opening=false;
+function openDoors(){
+  if(opening || document.body.classList.contains('entered')) return;
+  opening=true;
+  playDoor();
+  document.body.classList.add('opening');
+  setTimeout(()=>{
+    document.body.classList.add('entered');
+    document.body.classList.remove('opening');
+    if(soundOn) startAmbient();
+    window.scrollTo(0,0);
+    opening=false;
+  },2300);
+}
+document.getElementById('enter').addEventListener('click',openDoors);
+const shopDoor=document.getElementById('shop-door');
+if(shopDoor){
+  shopDoor.addEventListener('click',openDoors);
+  shopDoor.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' ') openDoors(); });
+}
+
+/* ============================================================
+   ローディング（洋書が開く）→ 2ページ目のロゴを押して夜空トップへ
+   ============================================================ */
+let bookOpened=false;
+function openTop(){
+  if(bookOpened) return; bookOpened=true;
+  document.body.classList.add('gone');   // 本が手前へズーム→夜空トップが現れる
+  window.scrollTo(0,0);
+}
+window.addEventListener('load',()=>{
+  setTimeout(()=>document.body.classList.add('loaded'),400);   // 洋書が浮かぶ→ゆっくり開く
+});
+const bookLogo=document.getElementById('book-logo');
+bookLogo.addEventListener('click',openTop);
+bookLogo.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' ') openTop(); });
+// 念のため：しばらく操作がなければ自動で夜空トップへ進む
+setTimeout(()=>{ if(!bookOpened) openTop(); },12000);
+
+/* ============================================================
+   カスタムカーソル（小さな金色の星 #B08D57）— PCのみ
+   ============================================================ */
+if(window.matchMedia('(pointer:fine)').matches){
+  document.body.classList.add('has-moon');
+  const moon=document.querySelector('.cursor-moon'), glow=document.querySelector('.cursor-glow');
+  let mx=innerWidth/2,my=innerHeight/2,gx=mx,gy=my;
+  addEventListener('pointermove',e=>{
+    mx=e.clientX;my=e.clientY;
+    moon.style.transform=`translate(${mx}px,${my}px) translate(-50%,-50%)`;
+    const t=e.target;
+    document.body.classList.toggle('moon-hover',
+      !!(t.closest('a,button,.item,#book-logo,.shop-door')));
+  });
+  (function loop(){
+    gx+=(mx-gx)*0.15; gy+=(my-gy)*0.15;
+    glow.style.transform=`translate(${gx}px,${gy}px) translate(-50%,-50%)`;
+    requestAnimationFrame(loop);
+  })();
+  addEventListener('pointerdown',()=>{ moon.style.filter='drop-shadow(0 0 12px rgba(176,141,87,1))';});
+  addEventListener('pointerup',()=>{ moon.style.filter='';});
+}
+</script>
+</body>
+</html>

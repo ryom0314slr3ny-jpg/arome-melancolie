@@ -1,0 +1,16 @@
+# ===== 公開してはいけない秘密情報（絶対にコミットしない）=====
+assets/api-key.txt
+
+# ===== 開発用スクリプト・メモ（サイト表示には不要）=====
+*.ps1
+assets/midjourney-プロンプト.txt
+assets/お読みください.txt
+
+# ===== 中間・バックアップファイル（公開不要）=====
+assets/book-cover-original.png
+assets/building-nobg-full.png
+assets/building-crop.jpg
+
+# OS
+Thumbs.db
+.DS_Store
